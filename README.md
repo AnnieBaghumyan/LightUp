@@ -99,6 +99,7 @@ lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
 lightup/generator.py  random solvable puzzles (solution-first construction)
 lightup/solver.py     shared solver interface: SolveResult, Stats, observer
 lightup/backtracking.py  naive backtracking baseline (CSP, Ch. 6)
+solvers.md            how each solving approach works and how to measure it
 puzzles/              puzzle instance files
 tests/                pytest suite
 ```
