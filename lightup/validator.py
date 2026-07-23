@@ -123,3 +123,16 @@ def check_solution(puzzle, bulbs):
 def is_solved(puzzle, bulbs):
     """Convenience goal-test wrapper: True iff no violations at all."""
     return not check_solution(puzzle, bulbs)
+
+
+def involved_cells(violations, kinds=None):
+    """All cells mentioned by the given violations, as a set.
+
+    kinds: optional set of violation kinds to include (None = all).  The GUI
+    uses this to highlight offending cells without knowing any game rules.
+    """
+    cells = set()
+    for v in violations:
+        if kinds is None or v.kind in kinds:
+            cells.update(v.cells)
+    return cells

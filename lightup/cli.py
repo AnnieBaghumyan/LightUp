@@ -49,7 +49,17 @@ def main(argv=None):
     check.add_argument("--bulbs", default="",
                        help='bulb positions, e.g. "0,0 1,3 2,4"')
 
+    play = sub.add_parser("play", help="play a puzzle in a window (Tkinter)")
+    play.add_argument("puzzle", help="path to a puzzle .txt file")
+
     args = ap.parse_args(argv)
+
+    if args.command == "play":
+        # Imported here so the CLI works even on machines without Tkinter.
+        from .gui import run
+        run(args.puzzle)
+        return 0
+
     puzzle = puzzle_parser.parse_file(args.puzzle)
     style = {"unicode": not args.ascii, "color": not args.no_color}
 

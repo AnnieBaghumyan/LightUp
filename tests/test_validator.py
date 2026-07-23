@@ -8,7 +8,8 @@ from pathlib import Path
 
 from lightup import parser
 from lightup.board import lit_cells
-from lightup.validator import check_partial, check_solution, is_solved
+from lightup.validator import (check_partial, check_solution, involved_cells,
+                               is_solved)
 
 PUZZLES = Path(__file__).resolve().parent.parent / "puzzles"
 
@@ -95,6 +96,16 @@ def test_bulb_on_wall_is_reported():
     puzzle = parser.parse_file(PUZZLES / "thesis7x7.txt")
     violations = check_partial(puzzle, {(2, 1)})  # (2,1) is a wall
     assert "bulb_not_on_white" in kinds(violations)
+
+
+def test_involved_cells_filters_by_kind():
+    puzzle = parser.parse("...\n...\n...")
+    violations = check_solution(puzzle, {(0, 0), (0, 2)})
+    # Only the clashing bulbs, not every unlit cell.
+    cells = involved_cells(violations, kinds={"bulbs_see_each_other"})
+    assert cells == {(0, 0), (0, 2)}
+    # Unfiltered, the unlit cells are included too.
+    assert (1, 1) in involved_cells(violations)
 
 
 # ----- lighting geometry -----------------------------------------------------

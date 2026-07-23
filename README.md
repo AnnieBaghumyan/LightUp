@@ -37,6 +37,11 @@ python -m lightup check puzzles/corner2.txt --bulbs "0,1 1,0 2,2"
 
 # Plain-terminal fallback
 python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
+
+# Play the game in a window: click white cells to place/remove bulbs.
+# Conflicting cells get a red border, satisfied clues turn green,
+# R resets, Open... loads another puzzle.
+python -m lightup play puzzles/thesis7x7.txt
 ```
 
 ## Puzzle file format
@@ -62,9 +67,11 @@ lightup/parser.py     text <-> Puzzle
 lightup/render.py     terminal board rendering
 lightup/validator.py  rule checking with named, explained violations
 lightup/cli.py        command line interface
+lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
 puzzles/              puzzle instance files
 tests/                pytest suite
 ```
 
-Solvers, the puzzle generator, the experiment harness and the Tkinter viewer
-are added in later steps.
+Solvers, the puzzle generator and the experiment harness are added in later
+steps; the GUI's `BoardView.show_state()` is the hook their step-by-step
+animation will use.
