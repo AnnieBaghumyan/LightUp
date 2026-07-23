@@ -18,11 +18,12 @@ Run with:
 """
 
 import tkinter as tk
-from tkinter import filedialog, font as tkfont
+from tkinter import filedialog, ttk, font as tkfont
 from pathlib import Path
 
 from . import parser as puzzle_parser
 from .board import lit_cells
+from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
 from .validator import check_solution, involved_cells
 
 # ----- look & feel -----------------------------------------------------------
@@ -40,6 +41,7 @@ COLORS = {
     "bulb":       "#ffd23f",  # bulb body
     "bulb_edge":  "#8a6d00",
     "conflict":   "#e4572e",  # border of cells involved in a violation
+    "mark":       "#8a8a94",  # player's X = "no bulb here" note
     "clue_text":  "#f7f4ec",  # clue still open
     "clue_ok":    "#8fd694",  # clue satisfied exactly
     "clue_bad":   "#ff6b6b",  # clue exceeded or impossible
@@ -103,6 +105,16 @@ class BoardView:
                                 cx + radius, cy + radius,
                                 fill=COLORS["bulb"], outline=edge, width=2)
 
+    def _draw_mark(self, r, c):
+        """The player's X note: "I believe no bulb goes here".  Purely a
+        convenience for the human — the validator never sees the marks."""
+        x0, y0, x1, y1 = self._cell_box(r, c)
+        inset = CELL * 0.32
+        self.canvas.create_line(x0 + inset, y0 + inset, x1 - inset, y1 - inset,
+                                fill=COLORS["mark"], width=3, capstyle="round")
+        self.canvas.create_line(x0 + inset, y1 - inset, x1 - inset, y0 + inset,
+                                fill=COLORS["mark"], width=3, capstyle="round")
+
     def _clue_color(self, r, c, bulbs):
         """Clue digit color: green when satisfied exactly, red when already
         over the limit, neutral otherwise."""
@@ -115,11 +127,13 @@ class BoardView:
             return COLORS["clue_ok"]
         return COLORS["clue_text"]
 
-    def show_state(self, bulbs, conflicts=frozenset(), solved=False):
+    def show_state(self, bulbs, conflicts=frozenset(), solved=False,
+                   marks=frozenset()):
         """Repaint the board for the given bulb set.
 
         conflicts: cells to outline in red (computed by the caller from the
         validator's violations, so the view itself knows no game rules).
+        marks: the player's X notes, drawn but never validated.
         """
         puzzle = self.puzzle
         lit = lit_cells(puzzle, bulbs)
@@ -147,6 +161,8 @@ class BoardView:
                                             fill=self._clue_color(r, c, bulbs))
                 elif (r, c) in bulbs:
                     self._draw_bulb(r, c, (r, c) in conflicts)
+                elif (r, c) in marks:
+                    self._draw_mark(r, c)
 
                 if (r, c) in conflicts:
                     self.canvas.create_rectangle(x0 + 1, y0 + 1, x1 - 1, y1 - 1,
@@ -175,37 +191,84 @@ class PlayApp:
     def __init__(self, root, puzzle, title="LightUp"):
         self.root = root
         self.bulbs = set()
+        self.marks = set()   # the player's X notes ("no bulb here")
 
         root.title("LightUp — Akari")
         root.configure(bg=COLORS["app_bg"])
         root.resizable(False, False)
 
         ui_font = tkfont.Font(family="Segoe UI", size=10)
+        button_style = dict(font=ui_font, bg="#33333e", fg=COLORS["white"],
+                            activebackground="#44444f",
+                            activeforeground=COLORS["white"],
+                            relief="flat", padx=10)
 
-        # --- toolbar: puzzle name + buttons ---------------------------------
+        # --- toolbar: puzzle name, tool selector, buttons -------------------
         toolbar = tk.Frame(root, bg=COLORS["app_bg"])
         toolbar.pack(fill="x", padx=12, pady=(10, 4))
         self.title_label = tk.Label(toolbar, text=title, font=ui_font,
                                     bg=COLORS["app_bg"],
                                     fg=COLORS["status_txt"])
         self.title_label.pack(side="left")
+
+        # Tool selector: what a LEFT click places.  Right click is always X.
+        self.tool = tk.StringVar(value="bulb")
+        for text, value in [("✕ X (X)", "mark"), ("● Bulb (B)", "bulb")]:
+            tk.Radiobutton(toolbar, text=text, value=value,
+                           variable=self.tool, command=self.refresh,
+                           font=ui_font, bg=COLORS["app_bg"],
+                           fg=COLORS["status_txt"], selectcolor="#33333e",
+                           activebackground=COLORS["app_bg"],
+                           activeforeground=COLORS["white"],
+                           indicatoron=False, padx=8).pack(side="right",
+                                                           padx=(6, 0))
         for text, command in [("Reset (R)", self.reset),
-                              ("Open…", self.open_file),
-                              ("New (N)", self.new_puzzle)]:
-            tk.Button(toolbar, text=text, command=command, font=ui_font,
-                      bg="#33333e", fg=COLORS["white"],
-                      activebackground="#44444f",
-                      activeforeground=COLORS["white"],
-                      relief="flat", padx=10).pack(side="right", padx=(6, 0))
+                              ("Open…", self.open_file)]:
+            tk.Button(toolbar, text=text, command=command,
+                      **button_style).pack(side="right", padx=(6, 0))
+
+        # --- new-puzzle configuration: size (3-25) and difficulty -----------
+        config = tk.Frame(root, bg=COLORS["app_bg"])
+        config.pack(fill="x", padx=12, pady=(0, 4))
+        tk.Label(config, text="New puzzle:", font=ui_font,
+                 bg=COLORS["app_bg"], fg=COLORS["status_txt"]
+                 ).pack(side="left")
+
+        self.width_var = tk.IntVar(value=puzzle.width)
+        self.height_var = tk.IntVar(value=puzzle.height)
+        spin_style = dict(from_=MIN_SIZE, to=MAX_SIZE, width=3, font=ui_font,
+                          bg="#33333e", fg=COLORS["white"],
+                          buttonbackground="#44444f", relief="flat",
+                          justify="center")
+        tk.Spinbox(config, textvariable=self.width_var,
+                   **spin_style).pack(side="left", padx=(8, 2))
+        tk.Label(config, text="×", font=ui_font, bg=COLORS["app_bg"],
+                 fg=COLORS["status_txt"]).pack(side="left")
+        tk.Spinbox(config, textvariable=self.height_var,
+                   **spin_style).pack(side="left", padx=(2, 8))
+
+        self.difficulty_var = tk.StringVar(value="medium")
+        difficulty = ttk.Combobox(config, textvariable=self.difficulty_var,
+                                  values=list(DIFFICULTY), state="readonly",
+                                  width=8, font=ui_font)
+        difficulty.pack(side="left", padx=(0, 8))
+
+        tk.Button(config, text="Generate (N)", command=self.new_puzzle,
+                  **button_style).pack(side="left")
 
         # --- board ----------------------------------------------------------
         self.view = BoardView(root, puzzle)
         self.view.canvas.pack(padx=12, pady=4)
         self.view.canvas.bind("<Button-1>", self.on_click)
+        self.view.canvas.bind("<Button-3>", self.on_right_click)
         root.bind("r", lambda _e: self.reset())
         root.bind("R", lambda _e: self.reset())
         root.bind("n", lambda _e: self.new_puzzle())
         root.bind("N", lambda _e: self.new_puzzle())
+        root.bind("b", lambda _e: self.tool.set("bulb"))
+        root.bind("B", lambda _e: self.tool.set("bulb"))
+        root.bind("x", lambda _e: self.tool.set("mark"))
+        root.bind("X", lambda _e: self.tool.set("mark"))
 
         # --- status bar -----------------------------------------------------
         self.status = tk.Label(root, font=ui_font, bg=COLORS["app_bg"],
@@ -218,27 +281,51 @@ class PlayApp:
     # ----- interaction -------------------------------------------------------
 
     def on_click(self, event):
+        """Left click: place/remove whatever the selected tool is."""
         cell = self.view.cell_at(event.x, event.y)
         if cell is None or not self.view.puzzle.is_white(*cell):
             return  # clicks on walls or the margin do nothing
-        if cell in self.bulbs:
-            self.bulbs.remove(cell)
+        if self.tool.get() == "bulb":
+            self._toggle(cell, self.bulbs, also_clear=self.marks)
         else:
-            self.bulbs.add(cell)
+            self._toggle(cell, self.marks, also_clear=self.bulbs)
+
+    def on_right_click(self, event):
+        """Right click: always toggle an X mark, regardless of the tool."""
+        cell = self.view.cell_at(event.x, event.y)
+        if cell is None or not self.view.puzzle.is_white(*cell):
+            return
+        self._toggle(cell, self.marks, also_clear=self.bulbs)
+
+    def _toggle(self, cell, target, also_clear):
+        """Toggle `cell` in `target`; a cell never holds a bulb AND an X."""
+        if cell in target:
+            target.remove(cell)
+        else:
+            target.add(cell)
+            also_clear.discard(cell)
         self.refresh()
 
     def reset(self):
         self.bulbs.clear()
+        self.marks.clear()
         self.refresh()
 
     def new_puzzle(self):
-        """Generate a fresh random puzzle of the same size and play it."""
-        from .generator import generate
-        puzzle, _solution = generate(self.view.puzzle.height,
-                                     self.view.puzzle.width)
+        """Generate a random puzzle from the size/difficulty configuration."""
+        # Spinboxes allow typing, so clamp whatever is in them to the range.
+        try:
+            width = min(MAX_SIZE, max(MIN_SIZE, self.width_var.get()))
+            height = min(MAX_SIZE, max(MIN_SIZE, self.height_var.get()))
+        except tk.TclError:   # non-numeric text typed into a spinbox
+            width, height = self.view.puzzle.width, self.view.puzzle.height
+        self.width_var.set(width)
+        self.height_var.set(height)
+        level = self.difficulty_var.get()
+
+        puzzle, _solution = generate(height, width, **DIFFICULTY[level])
         self.view.set_puzzle(puzzle)
-        self.title_label.config(
-            text=f"generated {puzzle.width}x{puzzle.height}")
+        self.title_label.config(text=f"generated {width}x{height} ({level})")
         self.reset()
 
     def open_file(self):
@@ -261,7 +348,7 @@ class PlayApp:
         solved = not violations
         conflicts = involved_cells(violations, CONFLICT_KINDS)
 
-        self.view.show_state(self.bulbs, conflicts, solved)
+        self.view.show_state(self.bulbs, conflicts, solved, marks=self.marks)
 
         lit = lit_cells(puzzle, self.bulbs)
         total = len(puzzle.white_cells())

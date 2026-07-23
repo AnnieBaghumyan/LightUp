@@ -54,11 +54,15 @@ def main(argv=None):
 
     gen = sub.add_parser("generate", parents=[common],
                          help="generate a random solvable puzzle")
-    gen.add_argument("size", help='board size, e.g. "7x7" or "10x14"')
-    gen.add_argument("--walls", type=float, default=0.18,
-                     help="fraction of cells that become walls (default 0.18)")
-    gen.add_argument("--clues", type=float, default=0.85,
-                     help="fraction of walls that get a number (default 0.85)")
+    gen.add_argument("size", help='board size (3-25 per side), e.g. "7x7"')
+    gen.add_argument("--difficulty", choices=["easy", "medium", "hard"],
+                     help="preset for wall/clue density")
+    gen.add_argument("--walls", type=float, default=None,
+                     help="fraction of cells that become walls "
+                          "(overrides --difficulty)")
+    gen.add_argument("--clues", type=float, default=None,
+                     help="fraction of walls that get a number "
+                          "(overrides --difficulty)")
     gen.add_argument("--no-symmetry", action="store_true",
                      help="disable 180-degree rotational symmetry of walls")
     gen.add_argument("--seed", type=int, default=None,
@@ -79,13 +83,26 @@ def main(argv=None):
         return 0
 
     if args.command == "generate":
-        from .generator import generate
+        from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
         try:
             width, height = (int(n) for n in args.size.lower().split("x"))
         except ValueError:
             ap.error(f'size must look like "7x7", got {args.size!r}')
+        if not (MIN_SIZE <= width <= MAX_SIZE
+                and MIN_SIZE <= height <= MAX_SIZE):
+            ap.error(f"each side must be {MIN_SIZE}-{MAX_SIZE}, "
+                     f"got {width}x{height}")
+
+        # Explicit --walls/--clues win over the --difficulty preset,
+        # which wins over the plain defaults.
+        preset = DIFFICULTY[args.difficulty] if args.difficulty else {}
+        walls = args.walls if args.walls is not None \
+            else preset.get("wall_density", 0.18)
+        clues = args.clues if args.clues is not None \
+            else preset.get("clue_density", 0.85)
+
         puzzle, solution = generate(
-            height, width, wall_density=args.walls, clue_density=args.clues,
+            height, width, wall_density=walls, clue_density=clues,
             symmetric=not args.no_symmetry, seed=args.seed)
 
         style = {"unicode": not args.ascii, "color": not args.no_color}

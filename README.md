@@ -50,16 +50,20 @@ python -m lightup check puzzles/corner2.txt --bulbs "0,1 1,0 2,2"
 # Plain-terminal fallback
 python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
 
-# Play the game in a window: click white cells to place/remove bulbs.
-# Conflicting cells get a red border, satisfied clues turn green,
-# R resets, Open... loads another puzzle, N generates a new random one.
+# Play the game in a window.
+#   left click  = place/remove with the selected tool (Bulb or X)
+#   right click = always toggle an X ("no bulb here" note, not validated)
+#   keys: B bulb tool, X mark tool, R reset, N new puzzle
+# Conflicting cells get a red border, satisfied clues turn green.
+# The "New puzzle" bar sets width x height (3-25) and easy/medium/hard.
 python -m lightup play puzzles/thesis7x7.txt
 
 # Generate random solvable puzzles (solution-first construction):
 python -m lightup generate 10x10 --seed 7                  # print it
+python -m lightup generate 10x10 --difficulty hard         # preset density
 python -m lightup generate 10x10 --seed 7 --out my.txt     # save it
 python -m lightup generate 12x12 --play                    # play it now
-# knobs: --walls 0.18 --clues 0.85 --no-symmetry --show-solution
+# fine knobs: --walls 0.18 --clues 0.85 --no-symmetry --show-solution
 ```
 
 ## Puzzle file format

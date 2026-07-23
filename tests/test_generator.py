@@ -5,7 +5,7 @@ generated puzzle must be solvable by the very bulb set it was built from.
 """
 
 from lightup.board import WALL
-from lightup.generator import generate
+from lightup.generator import DIFFICULTY, generate
 from lightup.validator import is_solved
 
 
@@ -38,6 +38,24 @@ def test_symmetry_flag():
              if puzzle.is_wall(r, c)}
     mirrored = {(h - 1 - r, w - 1 - c) for r, c in walls}
     assert walls == mirrored
+
+
+def test_difficulty_presets_are_solvable():
+    for level, knobs in DIFFICULTY.items():
+        for seed in range(5):
+            puzzle, solution = generate(9, 9, seed=seed, **knobs)
+            assert is_solved(puzzle, solution), f"{level}, seed {seed}"
+
+
+def test_easy_is_denser_than_hard():
+    easy, _ = generate(15, 15, seed=0, **DIFFICULTY["easy"])
+    hard, _ = generate(15, 15, seed=0, **DIFFICULTY["hard"])
+
+    def wall_count(p):
+        return sum(1 for r in range(p.height) for c in range(p.width)
+                   if p.is_wall(r, c))
+
+    assert wall_count(easy) > wall_count(hard)
 
 
 def test_density_knobs():

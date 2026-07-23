@@ -25,6 +25,21 @@ import random
 
 from .board import Puzzle, EMPTY, WALL
 
+# Board sizes we support (both width and height).
+MIN_SIZE, MAX_SIZE = 3, 25
+
+# Difficulty presets = constraint density.  Easy boards are packed with
+# walls and every wall has a number, so most bulb positions are forced;
+# hard boards are open and sparsely numbered, leaving much more choice.
+# NOTE for the report: until the solvers exist this is a *proxy* for
+# difficulty; once backtracking lands we can measure real search effort per
+# preset and calibrate these numbers with data.
+DIFFICULTY = {
+    "easy":   {"wall_density": 0.25, "clue_density": 1.00},
+    "medium": {"wall_density": 0.18, "clue_density": 0.80},
+    "hard":   {"wall_density": 0.12, "clue_density": 0.55},
+}
+
 
 def generate(height, width, *, wall_density=0.18, clue_density=0.85,
              symmetric=True, seed=None):
