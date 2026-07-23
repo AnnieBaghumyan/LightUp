@@ -18,11 +18,23 @@ Place light bulbs on white cells so that:
 ## Setup
 
 Requires Python 3.10+ (developed on 3.13). The core code uses only the
-standard library; tests use pytest:
+standard library; pytest (tests) and matplotlib (experiment plots) come from
+`requirements.txt`. Use a virtual environment:
 
 ```
-pip install pytest
+# Windows (PowerShell)
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
+
+Activate the venv (second line) in every new terminal before running the
+commands below.
 
 ## Running
 
