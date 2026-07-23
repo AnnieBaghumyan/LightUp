@@ -17,14 +17,25 @@ Run with:
     python -m lightup play puzzles/thesis7x7.txt
 """
 
+import threading
 import tkinter as tk
 from tkinter import filedialog, ttk, font as tkfont
 from pathlib import Path
 
 from . import parser as puzzle_parser
+from .backtracking import solve as backtracking_solve
 from .board import lit_cells
 from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
 from .validator import check_solution, involved_cells
+
+# Solvers offered in the window.  Later steps extend this dict (heuristic
+# backtracking, hill climbing, simulated annealing) and the whole animation
+# works for them unchanged, because they all speak the same observer events.
+SOLVERS = {
+    "backtracking (naive)": backtracking_solve,
+}
+
+SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
 
 # ----- look & feel -----------------------------------------------------------
 
@@ -254,6 +265,15 @@ class PlayApp:
         self.bulbs = set()
         self.marks = set()   # the player's X notes ("no bulb here")
 
+        # Solver-animation state.  The solver runs in a background thread
+        # while an observer records its events; the GUI then REPLAYS the
+        # recording (play/pause/step/finish) by maintaining the bulb set
+        # incrementally from the events.  self.replay is None in hand-play
+        # mode, else {"events", "pos", "bulbs", "result"}.
+        self.replay = None
+        self.solving = False
+        self.playing = False
+
         root.title("LightUp — Akari")
         root.configure(bg=COLORS["app_bg"])
         root.resizable(False, False)
@@ -313,6 +333,32 @@ class PlayApp:
         tk.Button(config, text="Generate (N)", command=self.new_puzzle,
                   **button_style).pack(side="left")
 
+        # --- solver panel: pick a solver and watch it think -----------------
+        solver_bar = tk.Frame(root, bg=COLORS["app_bg"])
+        solver_bar.pack(fill="x", padx=12, pady=(0, 4))
+        tk.Label(solver_bar, text="Solver:", font=ui_font,
+                 bg=COLORS["app_bg"], fg=COLORS["status_txt"]
+                 ).pack(side="left")
+        self.solver_var = tk.StringVar(value=next(iter(SOLVERS)))
+        ttk.Combobox(solver_bar, textvariable=self.solver_var,
+                     values=list(SOLVERS), state="readonly", width=19,
+                     font=ui_font).pack(side="left", padx=(8, 8))
+        for text, command in [("Solve", self.start_solve),
+                              ("Play/Pause", self.toggle_play),
+                              ("Step", self.step_once),
+                              ("Finish", self.finish_replay),
+                              ("Stop", self.stop_replay)]:
+            tk.Button(solver_bar, text=text, command=command,
+                      **button_style).pack(side="left", padx=(0, 6))
+        tk.Label(solver_bar, text="speed", font=ui_font,
+                 bg=COLORS["app_bg"], fg=COLORS["status_txt"]
+                 ).pack(side="left", padx=(6, 2))
+        self.speed_var = tk.IntVar(value=80)  # solver events per second
+        tk.Scale(solver_bar, variable=self.speed_var, from_=10, to=1000,
+                 orient="horizontal", showvalue=False, length=110,
+                 bg=COLORS["app_bg"], troughcolor="#33333e",
+                 highlightthickness=0).pack(side="left")
+
         # --- board ----------------------------------------------------------
         self.view = BoardView(root, puzzle)
         self.view.canvas.pack(padx=12, pady=4)
@@ -335,10 +381,144 @@ class PlayApp:
 
         self.refresh()
 
+    # ----- solver animation --------------------------------------------------
+
+    def start_solve(self):
+        """Run the selected solver in a background thread, recording its
+        observer events; when it finishes, animate the recording."""
+        if self.solving:
+            return
+        self.stop_replay()
+        self.bulbs.clear()
+        self.marks.clear()
+        self.solving = True
+        self.status.config(text="Solving (recording the search)…",
+                           fg=COLORS["status_txt"])
+
+        events = []
+        holder = {}
+        solver = SOLVERS[self.solver_var.get()]
+        puzzle = self.view.puzzle
+
+        def run():  # solver thread: touches only its own data
+            holder["result"] = solver(
+                puzzle,
+                observer=lambda ev, cell, bulbs: events.append((ev, cell)),
+                timeout_s=SOLVE_TIMEOUT_S)
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        self._await_solver(thread, events, holder)
+
+    def _await_solver(self, thread, events, holder):
+        """Poll from the Tk main loop until the solver thread is done."""
+        if thread.is_alive():
+            self.root.after(100, lambda: self._await_solver(
+                thread, events, holder))
+            return
+        self.solving = False
+        # After the first solution the recursion unwinds, emitting "remove"
+        # events as the stack pops — cut the recording at the solution so
+        # the replay ends ON the solved board instead of un-building it.
+        for i, (ev, _cell) in enumerate(events):
+            if ev == "solution":
+                del events[i + 1:]
+                break
+        self.replay = {"events": events, "pos": 0, "bulbs": set(),
+                       "result": holder["result"]}
+        self.playing = False
+        self.toggle_play()  # start the animation immediately
+
+    def _advance(self, n):
+        """Replay the next n recorded events onto the board."""
+        rp = self.replay
+        if rp is None:
+            return
+        conflicts = set()
+        last = ""
+        solved_now = False
+        while n > 0 and rp["pos"] < len(rp["events"]):
+            ev, cell = rp["events"][rp["pos"]]
+            rp["pos"] += 1
+            n -= 1
+            if ev == "place":
+                rp["bulbs"].add(cell)
+            elif ev == "remove":
+                rp["bulbs"].discard(cell)
+            elif ev == "conflict":
+                conflicts.add(cell)   # flashes red for this frame
+            elif ev == "solution":
+                solved_now = True
+            last = ev if cell is None else f"{ev} {cell}"
+
+        self.view.show_state(rp["bulbs"], conflicts, solved_now)
+
+        result, stats = rp["result"], rp["result"].stats
+        progress = (f"solver: event {rp['pos']}/{len(rp['events'])}"
+                    f"   [{last}]")
+        totals = (f"nodes={stats.nodes}  conflicts={stats.conflicts}  "
+                  f"backtracks={stats.backtracks}  "
+                  f"time={stats.time_ms:.0f}ms")
+        if rp["pos"] >= len(rp["events"]):     # recording fully replayed
+            self.playing = False
+            if result.solved:
+                verdict = "SOLVED"
+            elif result.timed_out:
+                verdict = f"TIMED OUT after {SOLVE_TIMEOUT_S}s"
+            else:
+                verdict = "NO SOLUTION exists"
+            self.status.config(
+                text=f"{verdict} — {totals}",
+                fg=COLORS["status_ok"] if result.solved
+                else COLORS["status_txt"])
+        else:
+            self.status.config(text=f"{progress}\n{totals}",
+                               fg=COLORS["status_txt"])
+        if solved_now:
+            self.playing = False               # pause on the solution frame
+
+    def toggle_play(self):
+        if self.replay is None:
+            return
+        self.playing = not self.playing
+        if self.playing:
+            self._play_tick()
+
+    def _play_tick(self):
+        """Animation heartbeat: every 25ms replay a batch of events sized
+        by the speed slider (events per second)."""
+        if not self.playing or self.replay is None:
+            return
+        self._advance(max(1, self.speed_var.get() // 40))
+        if self.playing:
+            self.root.after(25, self._play_tick)
+
+    def step_once(self):
+        self.playing = False
+        self._advance(1)
+
+    def finish_replay(self):
+        """Jump straight to the end of the recording."""
+        if self.replay is not None:
+            self.playing = False
+            self._advance(len(self.replay["events"]))
+
+    def stop_replay(self):
+        """Leave solver mode and return the board to hand-play."""
+        self.playing = False
+        if self.replay is not None:
+            self.replay = None
+            self.refresh()
+
     # ----- interaction -------------------------------------------------------
 
     def on_click(self, event):
         """Left click: place/remove whatever the selected tool is."""
+        if self.solving:
+            return                 # hands off while the solver is recording
+        if self.replay is not None:
+            self.stop_replay()     # first click exits solver mode
+            return
         cell = self.view.cell_at(event.x, event.y)
         if cell is None or not self.view.puzzle.is_white(*cell):
             return  # clicks on walls or the margin do nothing
@@ -349,6 +529,8 @@ class PlayApp:
 
     def on_right_click(self, event):
         """Right click: always toggle an X mark, regardless of the tool."""
+        if self.solving or self.replay is not None:
+            return
         cell = self.view.cell_at(event.x, event.y)
         if cell is None or not self.view.puzzle.is_white(*cell):
             return
@@ -364,6 +546,7 @@ class PlayApp:
         self.refresh()
 
     def reset(self):
+        self.stop_replay()
         self.bulbs.clear()
         self.marks.clear()
         self.refresh()
@@ -400,6 +583,8 @@ class PlayApp:
 
     def refresh(self):
         """Recompute everything from the validator and repaint."""
+        if self.replay is not None:
+            return  # the replay owns the canvas while it is active
         puzzle = self.view.puzzle
         violations = check_solution(puzzle, self.bulbs)
         solved = not violations
