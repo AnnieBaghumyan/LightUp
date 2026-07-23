@@ -185,6 +185,52 @@ class BoardView:
                                 font=banner_font, fill=COLORS["clue_ok"])
 
 
+class ToolButton(tk.Canvas):
+    """A small icon button for the left-click tool selector.
+
+    The icons are drawn with the same shapes the board uses (glowing bulb,
+    gray X), so the buttons read as "what will appear on the board when I
+    click".  The selected tool gets a yellow accent border.  Drawn on a
+    canvas instead of using emoji/image files so it looks identical on
+    every machine.
+    """
+
+    SIZE = 36
+
+    def __init__(self, parent, variable, value, icon):
+        super().__init__(parent, width=self.SIZE, height=self.SIZE,
+                         bg="#33333e", highlightthickness=2, cursor="hand2")
+        self.variable, self.value = variable, value
+        self.bind("<Button-1>", lambda _e: variable.set(value))
+        # Restyle whenever the tool changes, including via the B/X keys.
+        variable.trace_add("write", lambda *_: self._restyle())
+        self._draw(icon)
+        self._restyle()
+
+    def _draw(self, icon):
+        s = self.SIZE / 2 + 1  # visual center (canvas border offset)
+        if icon == "bulb":
+            radius, ray_in, ray_out = 8, 11, 15
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                self.create_line(s + dx * ray_in, s + dy * ray_in,
+                                 s + dx * ray_out, s + dy * ray_out,
+                                 fill=COLORS["bulb_edge"], width=2)
+            self.create_oval(s - radius, s - radius, s + radius, s + radius,
+                             fill=COLORS["bulb"], outline=COLORS["bulb_edge"],
+                             width=2)
+        else:  # the X mark
+            inset = 11
+            for x0, x1 in [(s - inset, s + inset), (s + inset, s - inset)]:
+                self.create_line(x0, s - inset, x1, s + inset,
+                                 fill=COLORS["mark"], width=3,
+                                 capstyle="round")
+
+    def _restyle(self):
+        selected = self.variable.get() == self.value
+        accent = COLORS["bulb"] if selected else "#44444f"
+        self.configure(highlightbackground=accent, highlightcolor=accent)
+
+
 class PlayApp:
     """The hand-play window: click white cells to place/remove bulbs."""
 
@@ -212,16 +258,12 @@ class PlayApp:
         self.title_label.pack(side="left")
 
         # Tool selector: what a LEFT click places.  Right click is always X.
+        # Icon buttons drawn with the same shapes the board uses.
         self.tool = tk.StringVar(value="bulb")
-        for text, value in [("✕ X (X)", "mark"), ("● Bulb (B)", "bulb")]:
-            tk.Radiobutton(toolbar, text=text, value=value,
-                           variable=self.tool, command=self.refresh,
-                           font=ui_font, bg=COLORS["app_bg"],
-                           fg=COLORS["status_txt"], selectcolor="#33333e",
-                           activebackground=COLORS["app_bg"],
-                           activeforeground=COLORS["white"],
-                           indicatoron=False, padx=8).pack(side="right",
-                                                           padx=(6, 0))
+        for value in ["mark", "bulb"]:
+            ToolButton(toolbar, self.tool, value,
+                       icon=value if value == "bulb" else "x"
+                       ).pack(side="right", padx=(6, 0))
         for text, command in [("Reset (R)", self.reset),
                               ("Open…", self.open_file)]:
             tk.Button(toolbar, text=text, command=command,
