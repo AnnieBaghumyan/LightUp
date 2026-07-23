@@ -52,6 +52,20 @@ def main(argv=None):
     play = sub.add_parser("play", help="play a puzzle in a window (Tkinter)")
     play.add_argument("puzzle", help="path to a puzzle .txt file")
 
+    solve = sub.add_parser("solve", parents=[common],
+                           help="solve a puzzle with an AI solver")
+    solve.add_argument("puzzle", help="path to a puzzle .txt file")
+    solve.add_argument("--solver", choices=["bt"], default="bt",
+                       help="bt = naive backtracking baseline (default)")
+    solve.add_argument("--max-solutions", type=int, default=1, metavar="N",
+                       help="stop after N solutions (2 = uniqueness check)")
+    solve.add_argument("--timeout", type=float, default=None, metavar="SEC",
+                       help="give up after this many seconds")
+    solve.add_argument("--log", action="store_true",
+                       help="print every solver decision")
+    solve.add_argument("--step", action="store_true",
+                       help="pause after every decision; Enter advances")
+
     gen = sub.add_parser("generate", parents=[common],
                          help="generate a random solvable puzzle")
     gen.add_argument("size", help='board size (3-25 per side), e.g. "7x7"')
@@ -126,6 +140,37 @@ def main(argv=None):
 
     if args.command == "show":
         print(render(puzzle, **style))
+
+    elif args.command == "solve":
+        from .backtracking import solve as bt_solve
+
+        observer = None
+        if args.log or args.step:
+            def observer(event, cell, bulbs):
+                print(f"[{event}] {cell if cell is not None else ''}")
+                if args.step:
+                    print(render(puzzle, bulbs, **style))
+                    input("-- Enter = next step, Ctrl+C = abort --")
+
+        result = bt_solve(puzzle, observer=observer,
+                          max_solutions=args.max_solutions,
+                          timeout_s=args.timeout)
+
+        print(render(puzzle, result.bulbs, **style))
+        if result.solved:
+            found = len(result.solutions)
+            note = ""
+            if args.max_solutions >= 2 and not result.timed_out:
+                note = ("  (unique)" if found == 1
+                        else f"  (multiple solutions exist)")
+            print(f"SOLVED - {found} solution(s) found{note}")
+        elif result.timed_out:
+            print(f"TIMED OUT after {args.timeout}s - no solution found yet")
+        else:
+            print("NO SOLUTION - the search space is exhausted.")
+        s = result.stats
+        print(f"stats: nodes={s.nodes}  conflicts={s.conflicts}  "
+              f"backtracks={s.backtracks}  time={s.time_ms:.1f}ms")
 
     elif args.command == "check":
         bulbs = parse_bulbs(args.bulbs)

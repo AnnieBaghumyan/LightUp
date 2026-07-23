@@ -58,6 +58,13 @@ python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
 # The "New puzzle" bar sets width x height (3-25) and easy/medium/hard.
 python -m lightup play puzzles/thesis7x7.txt
 
+# Solve a puzzle with the AI (naive backtracking baseline for now):
+python -m lightup solve puzzles/thesis7x7.txt
+python -m lightup solve puzzles/thesis7x7.txt --max-solutions 2   # uniqueness check
+python -m lightup solve puzzles/corner2.txt --log                 # decision log
+python -m lightup solve puzzles/corner2.txt --step                # watch it think
+# prints search stats: nodes, conflicts, backtracks, time
+
 # Generate random solvable puzzles (solution-first construction):
 python -m lightup generate 10x10 --seed 7                  # print it
 python -m lightup generate 10x10 --difficulty hard         # preset density
@@ -91,6 +98,8 @@ lightup/validator.py  rule checking with named, explained violations
 lightup/cli.py        command line interface
 lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
 lightup/generator.py  random solvable puzzles (solution-first construction)
+lightup/solver.py     shared solver interface: SolveResult, Stats, observer
+lightup/backtracking.py  naive backtracking baseline (CSP, Ch. 6)
 puzzles/              puzzle instance files
 tests/                pytest suite
 ```
