@@ -11,32 +11,43 @@ board edge (w itself not included).  Sight is symmetric.
 
 A SOLUTION is a set B of white cells ("bulbs") such that:
 
-  R1  Illumination:            every white cell w satisfies
-                               ({w} | sight(w)) & B != {}    (each bulb
-                               lights itself and everything it sees)
-  R2  No mutual illumination:  no bulb sees another bulb; equivalently,
-                               every maximal wall-free run of white cells
-                               in a row/column contains at most one bulb
-  R3  Clue exactness:          every numbered wall k has EXACTLY n_k bulbs
-                               among its orthogonally adjacent white cells
-                               (unnumbered walls constrain nothing)
+  R1  Illumination — every white cell is lit; a bulb lights itself and
+      everything it sees:
+
+          ∀ white cell w:   ({w} ∪ sight(w)) ∩ B ≠ ∅
+
+  R2  No mutual illumination — no bulb sees another bulb:
+
+          ∀ u, v ∈ B, u ≠ v:   u ∉ sight(v)
+
+      equivalently: every maximal wall-free run S of white cells in a
+      row or column contains at most one bulb,  |S ∩ B| ≤ 1.
+
+  R3  Clue exactness — every numbered wall k with number n_k has exactly
+      n_k adjacent bulbs, where N(k) is the set of orthogonally adjacent
+      white cells (unnumbered walls constrain nothing):
+
+          ∀ numbered wall k:   |N(k) ∩ B| = n_k
 
 Solution uniqueness is NOT a rule — published puzzles are merely curated
 to be unique.
 
 AS A CSP (AIMA Ch. 6)
 ---------------------
-  variables:    one X_w per white cell w
-  domains:      X_w in {bulb, no-bulb}
-  constraints:  R1: sum over {w} | sight(w) of X_v  >= 1   per white cell
-                R2: sum over segment S of X_v       <= 1   per segment
-                R3: sum over N(k) of X_v            == n_k per numbered wall
+  variables:    one X_w ∈ {0, 1} per white cell w   (1 = bulb)
+
+  constraints:  R1:  Σ_{v ∈ {w} ∪ sight(w)} X_v  ≥  1     per white cell w
+                R2:  Σ_{v ∈ S} X_v              ≤  1     per segment S
+                R3:  Σ_{v ∈ N(k)} X_v           =  n_k   per numbered wall k
 
 "Lit" is deliberately NOT a domain value: it is a derived property,
-lit(w) <=> ({w} | sight(w)) & B != {}, fully determined by the bulb
-assignment and computed on demand by lit_cells().  Adding it as a cell
-state would inflate the search space (3^n instead of 2^n) and require
-extra constraints just to keep the redundant state consistent.
+
+          lit(w)  ⟺  ({w} ∪ sight(w)) ∩ B ≠ ∅,
+
+fully determined by the bulb assignment and computed on demand by
+lit_cells().  Adding it as a cell state would inflate the search space
+(3ⁿ instead of 2ⁿ) and require extra constraints just to keep the
+redundant state consistent.
 
 Design note (this mirrors the problem formulation in our report):
 
