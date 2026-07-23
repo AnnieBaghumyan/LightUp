@@ -30,21 +30,12 @@ def test_reports_unsolvable():
     assert result.bulbs == set()
 
 
-def test_thesis_puzzle_is_unique():
-    # Published puzzles have exactly one solution; asking for up to two and
-    # exhausting the search must find exactly one.
-    puzzle = parser.parse_file(PUZZLES / "thesis7x7.txt")
-    result = solve(puzzle, max_solutions=2, timeout_s=60)
-    assert result.solved and not result.timed_out
-    assert len(result.solutions) == 1
-
-
-def test_open_board_has_many_solutions():
+def test_open_board_is_solved():
+    # A clue-less open board has many valid solutions; the solver stops at
+    # the first one it finds, and any valid one is acceptable.
     puzzle = parser.parse("...\n...\n...")
-    result = solve(puzzle, max_solutions=50, timeout_s=10)
-    assert len(result.solutions) > 1
-    for bulbs in result.solutions:
-        assert is_solved(puzzle, bulbs)
+    result = solve(puzzle, timeout_s=10)
+    assert result.solved and is_solved(puzzle, result.bulbs)
 
 
 def test_solves_generated_puzzles():

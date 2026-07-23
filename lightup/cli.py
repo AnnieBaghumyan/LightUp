@@ -57,8 +57,6 @@ def main(argv=None):
     solve.add_argument("puzzle", help="path to a puzzle .txt file")
     solve.add_argument("--solver", choices=["bt"], default="bt",
                        help="bt = naive backtracking baseline (default)")
-    solve.add_argument("--max-solutions", type=int, default=1, metavar="N",
-                       help="stop after N solutions (2 = uniqueness check)")
     solve.add_argument("--timeout", type=float, default=None, metavar="SEC",
                        help="give up after this many seconds")
     solve.add_argument("--log", action="store_true",
@@ -152,18 +150,11 @@ def main(argv=None):
                     print(render(puzzle, bulbs, **style))
                     input("-- Enter = next step, Ctrl+C = abort --")
 
-        result = bt_solve(puzzle, observer=observer,
-                          max_solutions=args.max_solutions,
-                          timeout_s=args.timeout)
+        result = bt_solve(puzzle, observer=observer, timeout_s=args.timeout)
 
         print(render(puzzle, result.bulbs, **style))
         if result.solved:
-            found = len(result.solutions)
-            note = ""
-            if args.max_solutions >= 2 and not result.timed_out:
-                note = ("  (unique)" if found == 1
-                        else f"  (multiple solutions exist)")
-            print(f"SOLVED - {found} solution(s) found{note}")
+            print("SOLVED")
         elif result.timed_out:
             print(f"TIMED OUT after {args.timeout}s - no solution found yet")
         else:

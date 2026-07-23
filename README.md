@@ -60,7 +60,6 @@ python -m lightup play puzzles/thesis7x7.txt
 
 # Solve a puzzle with the AI (naive backtracking baseline for now):
 python -m lightup solve puzzles/thesis7x7.txt
-python -m lightup solve puzzles/thesis7x7.txt --max-solutions 2   # uniqueness check
 python -m lightup solve puzzles/corner2.txt --log                 # decision log
 python -m lightup solve puzzles/corner2.txt --step                # watch it think
 # prints search stats: nodes, conflicts, backtracks, time

@@ -35,17 +35,13 @@ from .solver import SolveResult, Stats
 from .validator import check_partial, is_solved
 
 
-def solve(puzzle, observer=None, max_solutions=1, timeout_s=None):
-    """Depth-first search for up to `max_solutions` solutions.
-
-    max_solutions=2 turns this into a uniqueness checker: if only one
-    solution comes back after an exhaustive search, the puzzle is unique.
-    """
+def solve(puzzle, observer=None, timeout_s=None):
+    """Depth-first search that stops at the first solution found."""
     order = puzzle.white_cells()           # fixed row-major variable order
     index = {cell: i for i, cell in enumerate(order)}
     bulbs = set()
     stats = Stats()
-    solutions = []
+    solution = None
     notify = observer or (lambda event, cell, bulbs: None)
     start = time.perf_counter()
     timed_out = False
@@ -80,14 +76,15 @@ def solve(puzzle, observer=None, max_solutions=1, timeout_s=None):
         return True
 
     def backtrack(depth):
+        nonlocal solution
         if depth == len(order):
             # Every cell decided and every partial check passed on the way
             # down; the full goal test also verifies clues are met EXACTLY.
             if is_solved(puzzle, bulbs):
-                solutions.append(set(bulbs))
+                solution = set(bulbs)
                 notify("solution", None, bulbs)
             return
-        if out_of_time() or len(solutions) >= max_solutions:
+        if out_of_time() or solution is not None:
             return
         cell = order[depth]
 
@@ -104,7 +101,7 @@ def solve(puzzle, observer=None, max_solutions=1, timeout_s=None):
         stats.backtracks += 1
         notify("remove", cell, bulbs)
 
-        if out_of_time() or len(solutions) >= max_solutions:
+        if out_of_time() or solution is not None:
             return
 
         # Option 2: leave this cell empty.
@@ -119,8 +116,7 @@ def solve(puzzle, observer=None, max_solutions=1, timeout_s=None):
     backtrack(0)
     stats.time_ms = (time.perf_counter() - start) * 1000
 
-    return SolveResult(solved=bool(solutions),
-                       bulbs=set(solutions[0]) if solutions else set(),
-                       solutions=solutions,
+    return SolveResult(solved=solution is not None,
+                       bulbs=solution or set(),
                        stats=stats,
                        timed_out=timed_out)

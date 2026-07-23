@@ -33,7 +33,6 @@ class Stats:
 @dataclass
 class SolveResult:
     solved: bool
-    bulbs: set                     # first solution found (empty if none)
-    solutions: list = field(default_factory=list)  # all found (up to limit)
+    bulbs: set                     # the solution found (empty if none)
     stats: Stats = field(default_factory=Stats)
     timed_out: bool = False
