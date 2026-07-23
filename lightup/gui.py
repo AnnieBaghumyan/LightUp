@@ -273,6 +273,7 @@ class PlayApp:
         self.replay = None
         self.solving = False
         self.playing = False
+        self._on_ready = None   # action to run when the recording is ready
 
         root.title("LightUp — Akari")
         root.configure(bg=COLORS["app_bg"])
@@ -383,11 +384,16 @@ class PlayApp:
 
     # ----- solver animation --------------------------------------------------
 
-    def start_solve(self):
+    def start_solve(self, on_ready=None):
         """Run the selected solver in a background thread, recording its
-        observer events; when it finishes, animate the recording."""
+        observer events; when it finishes, animate the recording.
+
+        on_ready: optional action to run instead of auto-playing once the
+        recording exists (used by Step and Finish when pressed cold).
+        """
         if self.solving:
             return
+        self._on_ready = on_ready
         self.stop_replay()
         self.bulbs.clear()
         self.marks.clear()
@@ -427,7 +433,11 @@ class PlayApp:
         self.replay = {"events": events, "pos": 0, "bulbs": set(),
                        "result": holder["result"]}
         self.playing = False
-        self.toggle_play()  # start the animation immediately
+        if self._on_ready is not None:
+            action, self._on_ready = self._on_ready, None
+            action()            # e.g. Step or Finish pressed before Solve
+        else:
+            self.toggle_play()  # default: start the animation immediately
 
     def _advance(self, n):
         """Replay the next n recorded events onto the board."""
@@ -477,9 +487,20 @@ class PlayApp:
         if solved_now:
             self.playing = False               # pause on the solution frame
 
+    def _rewind(self):
+        """Reset the recording to the start so it can be watched again."""
+        self.replay["pos"] = 0
+        self.replay["bulbs"] = set()
+
     def toggle_play(self):
-        if self.replay is None:
+        if self.solving:
             return
+        if self.replay is None:
+            self.start_solve()      # pressed cold: solve, then auto-play
+            return
+        if self.replay["pos"] >= len(self.replay["events"]):
+            self._rewind()          # finished recording: play it again
+            self.playing = False
         self.playing = not self.playing
         if self.playing:
             self._play_tick()
@@ -494,14 +515,26 @@ class PlayApp:
             self.root.after(25, self._play_tick)
 
     def step_once(self):
+        if self.solving:
+            return
+        if self.replay is None:
+            # Pressed cold: record first, then take the first step (paused).
+            self.start_solve(on_ready=self.step_once)
+            return
         self.playing = False
+        if self.replay["pos"] >= len(self.replay["events"]):
+            self._rewind()          # stepping past the end starts over
         self._advance(1)
 
     def finish_replay(self):
         """Jump straight to the end of the recording."""
-        if self.replay is not None:
-            self.playing = False
-            self._advance(len(self.replay["events"]))
+        if self.solving:
+            return
+        if self.replay is None:
+            self.start_solve(on_ready=self.finish_replay)
+            return
+        self.playing = False
+        self._advance(len(self.replay["events"]))
 
     def stop_replay(self):
         """Leave solver mode and return the board to hand-play."""

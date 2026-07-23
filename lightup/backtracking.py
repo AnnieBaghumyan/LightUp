@@ -70,8 +70,7 @@ def solve(puzzle, observer=None, timeout_s=None):
         for w in order:
             if w in lit or index[w] >= depth:
                 continue  # already lit, or w itself may still get a bulb
-            if all(index[seen] < depth
-                   for seen in puzzle.cells_seen_from(*w)):
+            if all(index[seen] < depth for seen in puzzle.cells_seen_from(*w)):
                 return False
         return True
 
@@ -84,7 +83,7 @@ def solve(puzzle, observer=None, timeout_s=None):
                 solution = set(bulbs)
                 notify("solution", None, bulbs)
             return
-        if out_of_time() or solution is not None:
+        if out_of_time() or solution:
             return
         cell = order[depth]
 
