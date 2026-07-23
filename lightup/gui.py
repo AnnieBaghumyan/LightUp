@@ -28,8 +28,9 @@ from .validator import check_solution, involved_cells
 
 # ----- look & feel -----------------------------------------------------------
 
-CELL = 52   # pixel size of one board cell
-PAD = 18    # margin around the board inside the canvas
+CELL = 52      # preferred pixel size of one board cell (small boards)
+MIN_CELL = 20  # floor when shrinking big boards to fit the screen
+PAD = 18       # margin around the board inside the canvas
 
 COLORS = {
     "app_bg":     "#23232b",  # window background
@@ -70,32 +71,43 @@ class BoardView:
         self.set_puzzle(puzzle)
 
     def set_puzzle(self, puzzle):
-        """Attach a (new) puzzle and resize the canvas to fit it."""
+        """Attach a (new) puzzle and resize the canvas to fit it.
+
+        The cell size adapts to the screen: big boards (up to 25x25) shrink
+        until they fit, small boards use the comfortable default.  The
+        margins subtracted below leave room for the toolbars, the status
+        bar and the OS taskbar.
+        """
         self.puzzle = puzzle
-        self.canvas.config(width=puzzle.width * CELL + 2 * PAD,
-                           height=puzzle.height * CELL + 2 * PAD)
+        avail_w = self.canvas.winfo_screenwidth() - 120 - 2 * PAD
+        avail_h = self.canvas.winfo_screenheight() - 280 - 2 * PAD
+        self.cell = max(MIN_CELL,
+                        min(CELL, avail_w // puzzle.width,
+                            avail_h // puzzle.height))
+        self.canvas.config(width=puzzle.width * self.cell + 2 * PAD,
+                           height=puzzle.height * self.cell + 2 * PAD)
 
     def cell_at(self, x, y):
         """The (row, col) under a pixel position, or None outside the board."""
-        c = (x - PAD) // CELL
-        r = (y - PAD) // CELL
+        c = (x - PAD) // self.cell
+        r = (y - PAD) // self.cell
         return (r, c) if self.puzzle.in_bounds(r, c) else None
 
     # ----- drawing -----------------------------------------------------------
 
     def _cell_box(self, r, c):
         """Pixel rectangle (x0, y0, x1, y1) of a cell."""
-        x0 = PAD + c * CELL
-        y0 = PAD + r * CELL
-        return x0, y0, x0 + CELL, y0 + CELL
+        x0 = PAD + c * self.cell
+        y0 = PAD + r * self.cell
+        return x0, y0, x0 + self.cell, y0 + self.cell
 
     def _draw_bulb(self, r, c, in_conflict):
         """A bulb drawn as shapes (not an emoji) so it looks the same on
         every machine: a glowing circle with four short rays."""
         x0, y0, x1, y1 = self._cell_box(r, c)
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        radius = CELL * 0.26
-        ray_in, ray_out = radius + 3, radius + 9
+        radius = self.cell * 0.26
+        ray_in, ray_out = self.cell * 0.32, self.cell * 0.44
         edge = COLORS["conflict"] if in_conflict else COLORS["bulb_edge"]
         for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
             self.canvas.create_line(cx + dx * ray_in, cy + dy * ray_in,
@@ -109,11 +121,14 @@ class BoardView:
         """The player's X note: "I believe no bulb goes here".  Purely a
         convenience for the human — the validator never sees the marks."""
         x0, y0, x1, y1 = self._cell_box(r, c)
-        inset = CELL * 0.32
+        inset = self.cell * 0.32
+        width = max(2, self.cell // 16)
         self.canvas.create_line(x0 + inset, y0 + inset, x1 - inset, y1 - inset,
-                                fill=COLORS["mark"], width=3, capstyle="round")
+                                fill=COLORS["mark"], width=width,
+                                capstyle="round")
         self.canvas.create_line(x0 + inset, y1 - inset, x1 - inset, y0 + inset,
-                                fill=COLORS["mark"], width=3, capstyle="round")
+                                fill=COLORS["mark"], width=width,
+                                capstyle="round")
 
     def _clue_color(self, r, c, bulbs):
         """Clue digit color: green when satisfied exactly, red when already
@@ -139,8 +154,8 @@ class BoardView:
         lit = lit_cells(puzzle, bulbs)
         self.canvas.delete("all")
 
-        clue_font = tkfont.Font(family="Segoe UI", size=CELL // 3,
-                                weight="bold")
+        clue_font = tkfont.Font(family="Segoe UI",
+                                size=max(8, self.cell // 3), weight="bold")
 
         for r in range(puzzle.height):
             for c in range(puzzle.width):
