@@ -40,8 +40,14 @@ python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
 
 # Play the game in a window: click white cells to place/remove bulbs.
 # Conflicting cells get a red border, satisfied clues turn green,
-# R resets, Open... loads another puzzle.
+# R resets, Open... loads another puzzle, N generates a new random one.
 python -m lightup play puzzles/thesis7x7.txt
+
+# Generate random solvable puzzles (solution-first construction):
+python -m lightup generate 10x10 --seed 7                  # print it
+python -m lightup generate 10x10 --seed 7 --out my.txt     # save it
+python -m lightup generate 12x12 --play                    # play it now
+# knobs: --walls 0.18 --clues 0.85 --no-symmetry --show-solution
 ```
 
 ## Puzzle file format
@@ -68,6 +74,7 @@ lightup/render.py     terminal board rendering
 lightup/validator.py  rule checking with named, explained violations
 lightup/cli.py        command line interface
 lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
+lightup/generator.py  random solvable puzzles (solution-first construction)
 puzzles/              puzzle instance files
 tests/                pytest suite
 ```

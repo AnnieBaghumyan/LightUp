@@ -189,7 +189,9 @@ class PlayApp:
                                     bg=COLORS["app_bg"],
                                     fg=COLORS["status_txt"])
         self.title_label.pack(side="left")
-        for text, command in [("Reset (R)", self.reset), ("Open…", self.open_file)]:
+        for text, command in [("Reset (R)", self.reset),
+                              ("Open…", self.open_file),
+                              ("New (N)", self.new_puzzle)]:
             tk.Button(toolbar, text=text, command=command, font=ui_font,
                       bg="#33333e", fg=COLORS["white"],
                       activebackground="#44444f",
@@ -202,6 +204,8 @@ class PlayApp:
         self.view.canvas.bind("<Button-1>", self.on_click)
         root.bind("r", lambda _e: self.reset())
         root.bind("R", lambda _e: self.reset())
+        root.bind("n", lambda _e: self.new_puzzle())
+        root.bind("N", lambda _e: self.new_puzzle())
 
         # --- status bar -----------------------------------------------------
         self.status = tk.Label(root, font=ui_font, bg=COLORS["app_bg"],
@@ -226,6 +230,16 @@ class PlayApp:
     def reset(self):
         self.bulbs.clear()
         self.refresh()
+
+    def new_puzzle(self):
+        """Generate a fresh random puzzle of the same size and play it."""
+        from .generator import generate
+        puzzle, _solution = generate(self.view.puzzle.height,
+                                     self.view.puzzle.width)
+        self.view.set_puzzle(puzzle)
+        self.title_label.config(
+            text=f"generated {puzzle.width}x{puzzle.height}")
+        self.reset()
 
     def open_file(self):
         path = filedialog.askopenfilename(
@@ -264,9 +278,14 @@ class PlayApp:
             self.status.config(text=text, fg=COLORS["status_txt"])
 
 
+def run_puzzle(puzzle, title="LightUp"):
+    """Open the hand-play window for an in-memory puzzle."""
+    root = tk.Tk()
+    PlayApp(root, puzzle, title=title)
+    root.mainloop()
+
+
 def run(puzzle_path):
     """Open the hand-play window for one puzzle file (CLI entry point)."""
-    puzzle = puzzle_parser.parse_file(puzzle_path)
-    root = tk.Tk()
-    PlayApp(root, puzzle, title=Path(puzzle_path).name)
-    root.mainloop()
+    run_puzzle(puzzle_parser.parse_file(puzzle_path),
+               title=Path(puzzle_path).name)
