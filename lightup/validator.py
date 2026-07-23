@@ -1,5 +1,15 @@
 """Checking bulb placements against the LightUp rules.
 
+The rules R1 (all lit), R2 (no bulb sees a bulb), R3 (clues exact) are
+stated formally at the top of board.py.  Violation kinds map onto them:
+
+    R2 broken now:        bulbs_see_each_other
+    R3 broken now:        clue_exceeded            (already > n)
+    R3 unreachable:       clue_unsatisfiable       (can never reach n)
+    R1 failed (final):    cell_unlit
+    R3 failed (final):    clue_unmet               (< n in a full solution)
+    placement error:      bulb_not_on_white
+
 Every check returns a list of Violation records instead of a bare boolean.
 This is deliberate: the CLI and (later) the solvers' logs can then explain
 *why* a placement is wrong, which makes the search behavior inspectable

@@ -1,5 +1,43 @@
 """Board representation for the LightUp (Akari) puzzle.
 
+THE RULES, EXPLICITLY
+---------------------
+Given: a grid of cells, each either WHITE or a WALL; some walls carry a
+number n in {0,1,2,3,4}.
+
+Define sight(w) for a white cell w: all white cells reachable from w by
+walking straight up/down/left/right, stopping at the first wall or the
+board edge (w itself not included).  Sight is symmetric.
+
+A SOLUTION is a set B of white cells ("bulbs") such that:
+
+  R1  Illumination:            every white cell w satisfies
+                               ({w} | sight(w)) & B != {}    (each bulb
+                               lights itself and everything it sees)
+  R2  No mutual illumination:  no bulb sees another bulb; equivalently,
+                               every maximal wall-free run of white cells
+                               in a row/column contains at most one bulb
+  R3  Clue exactness:          every numbered wall k has EXACTLY n_k bulbs
+                               among its orthogonally adjacent white cells
+                               (unnumbered walls constrain nothing)
+
+Solution uniqueness is NOT a rule — published puzzles are merely curated
+to be unique.
+
+AS A CSP (AIMA Ch. 6)
+---------------------
+  variables:    one X_w per white cell w
+  domains:      X_w in {bulb, no-bulb}
+  constraints:  R1: sum over {w} | sight(w) of X_v  >= 1   per white cell
+                R2: sum over segment S of X_v       <= 1   per segment
+                R3: sum over N(k) of X_v            == n_k per numbered wall
+
+"Lit" is deliberately NOT a domain value: it is a derived property,
+lit(w) <=> ({w} | sight(w)) & B != {}, fully determined by the bulb
+assignment and computed on demand by lit_cells().  Adding it as a cell
+state would inflate the search space (3^n instead of 2^n) and require
+extra constraints just to keep the redundant state consistent.
+
 Design note (this mirrors the problem formulation in our report):
 
 - `Puzzle` holds only the immutable givens: which cells are white, which are
