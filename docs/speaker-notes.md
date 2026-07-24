@@ -8,9 +8,9 @@
 
 | Speaker | Slides | ~time |
 |---|---|---|
-| Anna Gasparyan | 1–4 (title, rules, why, formulation) | ~3.3 min |
+| Izabella Atajanyan | 1–4 (title, rules, why, formulation) | ~3.3 min |
 | Ani Baghumyan | 5–8 (solvers, system, setup, inference results) | ~4.0 min |
-| Izabella Atajanyan | 9–13 (local search, difficulty, robustness, conclusions, Q&A lead) | ~3.6 min |
+| Anna Gasparyan | 9–13 (local search, difficulty, robustness, conclusions, Q&A lead) | ~3.6 min |
 
 Swap freely — just keep the three shares roughly equal (equal input is
 graded) and hand over cleanly between slides 4→5 and 8→9.
