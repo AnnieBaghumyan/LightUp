@@ -1,0 +1,5 @@
+# Development / analysis dependencies.
+# The lightup package itself uses only the Python standard library.
+
+pytest      # test suite:            python -m pytest tests/
+matplotlib  # experiment plots (used in the experiments step)
