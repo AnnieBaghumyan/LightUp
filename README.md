@@ -113,6 +113,7 @@ lightup/solvers/      one module per solving approach:
   local.py            local search: hill climbing / simulated annealing
 experiments/          sweep runner + figure generation (see solvers.md §4)
 solvers.md            how each solving approach works and how to measure it
+docs/                 presentation.pptx, speaker-notes.md, report-notes.md
 puzzles/              puzzle instance files
 tests/                pytest suite
 ```
