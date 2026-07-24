@@ -71,29 +71,39 @@ from three to twenty-five, three difficulties."
 *(Do on camera: place 2-3 bulbs, one X, create one red conflict, fix it,
 then press N for a new board.)*
 
-## Scene 5 — watching the AI think (~45 s) · screen: same window
+## Scene 5 — watching the AI think (~60 s) · screen: same window
 
-**Voice:** "Now the AI. We pick the naive backtracking solver and press
-Solve. The animation replays every decision: bulbs appear, conflicts
-flash red, backtracking removes them — and the status bar counts nodes
-in real time. You can pause, single-step, or jump to the end. Now the
-same board with full inference — watch: almost everything is deduced in
-one cascade, with barely any red. That difference is what our
-experiments measure."
-*(Do on camera: naive Solve on a 10x10, let it run ~10 s at medium speed,
-Stop; switch dropdown to "BT + full inference", Solve, let it finish.)*
+**Voice:** "Now the AI. The dropdown holds all five solvers. First,
+naive backtracking: the animation replays every decision — bulbs
+appear, conflicts flash red, backtracking removes them, and the status
+bar counts nodes in real time. You can pause, single-step, or jump to
+the end. Same board, full inference: almost everything is deduced in
+one cascade, with barely any red. And here is simulated annealing — a
+completely different idea: it starts from a full random placement and
+repairs it, so the bulbs churn until the violations reach zero. All
+five solvers stream through this same animation."
+*(Do on camera: open the dropdown slowly so all five entries are
+readable; naive Solve on a 10x10 for ~10 s at medium speed, Stop; "BT +
+full inference" Solve to the end; "simulated annealing" Solve for ~8 s.)*
 
-## Scene 6 — command line and the headline number (~30 s) · screen: terminal
+## Scene 6 — command line, all five solvers (~40 s) · screen: terminal
 
 ```
 python -m lightup solve puzzles/thesis7x7.txt --solver bt
+python -m lightup solve puzzles/thesis7x7.txt --solver fc
 python -m lightup solve puzzles/thesis7x7.txt --solver full
+python -m lightup solve puzzles/thesis7x7.txt --solver hc --seed 1
+python -m lightup solve puzzles/thesis7x7.txt --solver sa --seed 1
 ```
 
-**Voice:** "The same solvers run from the command line with search
-statistics. On this published seven-by-seven, naive backtracking needs
-three hundred and eight nodes. Full inference needs zero — the whole
-puzzle falls to deduction alone."
+**Voice:** "The same five solvers run from the command line with search
+statistics — naive backtracking, forward checking, full inference, hill
+climbing, simulated annealing. On this published seven-by-seven the
+naive solver needs three hundred and eight nodes, forward checking
+twelve, and full inference zero — the whole puzzle falls to deduction.
+The two local-search solvers find it too, by repairing random
+placements. The ideas behind each solver, and how they compare across
+hundreds of boards, are in our presentation and report."
 
 ## Scene 7 — experiments (~25 s) · screen: terminal, then the figure
 
