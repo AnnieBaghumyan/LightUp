@@ -17,7 +17,7 @@ graded) and hand over cleanly between slides 4→5 and 8→9.
 
 ## Slide 1 — Title  (~30 s)
 
-**Say:** Good morning. We are Anna Gasparyan, Ani Baghumyan and Izabella Atajanyan. Our project is LightUp — also known as Akari — a Japanese logic puzzle. We built the game itself, and then made five different AI solvers compete on it. The board you see here is a published puzzle, solved by our own system. Let me start with the rules.
+**Say:** Good morning. Our project is LightUp — also known as Akari — a Japanese logic puzzle. We built the game itself, and then made five different AI solvers compete on it. The board you see here is a published puzzle, solved by our own system. Let me start with the rules.
 
 *Stage cue: One presenter opens; keep it moving.*
 
