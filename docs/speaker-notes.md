@@ -4,9 +4,20 @@
 > stage cues. Rehearse from this, then deliver it in your own
 > phrasing — reading aloud verbatim always sounds worse than it reads.
 
+## Speaker assignment (balanced by speaking time)
+
+| Speaker | Slides | ~time |
+|---|---|---|
+| Anna Gasparyan | 1–4 (title, rules, why, formulation) | ~3.3 min |
+| Ani Baghumyan | 5–8 (solvers, system, setup, inference results) | ~4.0 min |
+| Izabella Atajanyan | 9–13 (local search, difficulty, robustness, conclusions, Q&A lead) | ~3.6 min |
+
+Swap freely — just keep the three shares roughly equal (equal input is
+graded) and hand over cleanly between slides 4→5 and 8→9.
+
 ## Slide 1 — Title  (~30 s)
 
-**Say:** Good morning. We are [say your names]. Our project is LightUp — also known as Akari — a Japanese logic puzzle. We built the game itself, and then made five different AI solvers compete on it. The board you see here is a published puzzle, solved by our own system. Let me start with the rules.
+**Say:** Good morning. We are Anna Gasparyan, Ani Baghumyan and Izabella Atajanyan. Our project is LightUp — also known as Akari — a Japanese logic puzzle. We built the game itself, and then made five different AI solvers compete on it. The board you see here is a published puzzle, solved by our own system. Let me start with the rules.
 
 *Stage cue: One presenter opens; keep it moving.*
 
@@ -70,7 +81,7 @@
 
 **Say:** To conclude. Inference was the story: full propagation solved everything we generated, and cracked the reference puzzle without any search. Fewer nodes is not the same as less time. Simulated annealing beats hill climbing, confirming prior work — and hill climbing's failures are structural, stuck one step from the goal. Sparse boards turned out easier for solvers than for humans. Future work: generating unique-solution puzzles, arc consistency, and difficulty calibration. Thank you — we are happy to take questions.
 
-*Stage cue: All four members should have spoken by now.*
+*Stage cue: All three members should have spoken by now.*
 
 ## Slide 13 — References  (not spoken)
 
