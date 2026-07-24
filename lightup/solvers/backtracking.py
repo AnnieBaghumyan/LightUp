@@ -30,9 +30,9 @@ enormous obviously-dead subtrees on even tiny boards.
 import sys
 import time
 
-from .board import lit_cells
-from .solver import SolveResult, Stats
-from .validator import check_partial, is_solved
+from ..board import lit_cells
+from ..validator import check_partial, is_solved
+from .base import SolveResult, Stats
 
 
 def solve(puzzle, observer=None, timeout_s=None):

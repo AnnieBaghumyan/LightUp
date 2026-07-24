@@ -142,9 +142,8 @@ def main(argv=None):
         print(render(puzzle, **style))
 
     elif args.command == "solve":
-        from .backtracking import solve as bt_solve
-        from .csp import solve_forward, solve_full
-        chosen = {"bt": bt_solve, "fc": solve_forward,
+        from .solvers import solve_forward, solve_full, solve_naive
+        chosen = {"bt": solve_naive, "fc": solve_forward,
                   "full": solve_full}[args.solver]
 
         observer = None

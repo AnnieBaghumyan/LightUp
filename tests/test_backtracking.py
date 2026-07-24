@@ -8,8 +8,8 @@ several legitimate solutions.
 from pathlib import Path
 
 from lightup import parser
-from lightup.backtracking import solve
 from lightup.generator import DIFFICULTY, generate
+from lightup.solvers.backtracking import solve
 from lightup.validator import is_solved
 
 PUZZLES = Path(__file__).resolve().parent.parent / "puzzles"

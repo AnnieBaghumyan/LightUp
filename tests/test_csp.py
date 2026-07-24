@@ -5,9 +5,9 @@ comparing to one known answer."""
 from pathlib import Path
 
 from lightup import parser
-from lightup.backtracking import solve as naive_solve
-from lightup.csp import solve_forward, solve_full
 from lightup.generator import DIFFICULTY, generate
+from lightup.solvers.backtracking import solve as naive_solve
+from lightup.solvers.csp import solve_forward, solve_full
 from lightup.validator import is_solved
 
 PUZZLES = Path(__file__).resolve().parent.parent / "puzzles"
@@ -56,7 +56,7 @@ def test_inference_beats_the_naive_baseline():
 
 
 def test_static_ordering_ablation_runs():
-    from lightup.csp import solve
+    from lightup.solvers.csp import solve
     puzzle = parser.parse_file(PUZZLES / "thesis7x7.txt")
     result = solve(puzzle, timeout_s=30, ordering="static",
                    propagation="full")

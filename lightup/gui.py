@@ -23,19 +23,10 @@ from tkinter import filedialog, ttk, font as tkfont
 from pathlib import Path
 
 from . import parser as puzzle_parser
-from .backtracking import solve as backtracking_solve
 from .board import lit_cells
-from .csp import solve_forward, solve_full
 from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
+from .solvers import SOLVERS
 from .validator import check_solution, involved_cells
-
-# Solvers offered in the window.  All speak the same observer events, so
-# the animation works for every entry unchanged; local search joins later.
-SOLVERS = {
-    "backtracking (naive)": backtracking_solve,
-    "BT + forward checking": solve_forward,
-    "BT + full inference": solve_full,
-}
 
 SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
 

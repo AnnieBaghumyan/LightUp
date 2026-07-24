@@ -41,8 +41,8 @@ R1 and lets forward checking prune, so it fails faster when wrong.
 import sys
 import time
 
-from .solver import SolveResult, Stats
-from .validator import is_solved
+from ..validator import is_solved
+from .base import SolveResult, Stats
 
 BULB, EMPTY = True, False
 

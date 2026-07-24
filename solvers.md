@@ -15,7 +15,7 @@ one known answer, because a puzzle may legitimately have several solutions.
 
 ---
 
-## 1. Naive backtracking (`lightup/backtracking.py`)
+## 1. Naive backtracking (`lightup/solvers/backtracking.py`)
 
 The baseline. Every later solver exists to beat it, and its statistics are
 the yardstick.
@@ -91,6 +91,7 @@ Every solver returns a `SolveResult` with a `Stats` record:
 * `nodes` — decisions tried (bulb or no-bulb),
 * `conflicts` — decisions rejected by the consistency check,
 * `backtracks` — bulb placements undone,
+* `propagations` — assignments made by inference, not by search,
 * `time_ms` — wall-clock time,
 
 plus `timed_out`. An optional observer callback receives every event
@@ -114,7 +115,7 @@ python -m lightup play puzzles/thesis7x7.txt             # GUI animation
 
 ---
 
-## 2. Smart backtracking (`lightup/csp.py`)
+## 2. Smart backtracking (`lightup/solvers/csp.py`)
 
 Same search skeleton, but the solver *maintains knowledge* per cell
 (bulb / no-bulb / undecided, plus a lit-counter) instead of re-validating
@@ -172,6 +173,10 @@ seeds, growing sizes) belong to the experiment harness step.
 ```
 python -m lightup solve puzzles/thesis7x7.txt --solver bt|fc|full
 ```
+
+The backtracking family is now **feature-frozen**: one baseline and these
+two configurations. Further variants (AC-3/MAC, LCV, …) are future work,
+not project scope.
 
 ---
 

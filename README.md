@@ -101,9 +101,10 @@ lightup/validator.py  rule checking with named, explained violations
 lightup/cli.py        command line interface
 lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
 lightup/generator.py  random solvable puzzles (solution-first construction)
-lightup/solver.py     shared solver interface: SolveResult, Stats, observer
-lightup/backtracking.py  naive backtracking baseline (CSP, Ch. 6)
-lightup/csp.py        smart backtracking: forward checking / full inference
+lightup/solvers/      one module per solving approach:
+  base.py             shared SolveResult, Stats, observer contract
+  backtracking.py     naive backtracking baseline (CSP, Ch. 6)
+  csp.py              smart backtracking: forward checking / full inference
 solvers.md            how each solving approach works and how to measure it
 puzzles/              puzzle instance files
 tests/                pytest suite
