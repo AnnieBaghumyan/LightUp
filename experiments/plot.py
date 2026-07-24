@@ -158,6 +158,41 @@ def fig_difficulty(rows, outdir, size=None):
     plt.close(fig)
 
 
+def fig_budget(rows_a, rows_b, outdir, label_a="5 s budget",
+               label_b="10 s budget"):
+    """Solve rate per solver under two time budgets (same instances).
+
+    The point of this figure: more time helps solvers that are SLOW
+    (budget-limited), not solvers that are STUCK (structurally limited).
+    """
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    width = 0.38
+    for offset, rows, label, alpha in [(-width / 2, rows_a, label_a, 0.45),
+                                       (width / 2, rows_b, label_b, 1.0)]:
+        for i, s in enumerate(ALL):
+            runs = [r["solved"] for r in rows if r["solver"] == s]
+            rate = 100 * sum(runs) / len(runs)
+            ax.bar(i + offset, rate, width * 0.92, color=COLOR[s],
+                   alpha=alpha)
+            ax.annotate(f"{rate:.0f}", (i + offset, rate),
+                        textcoords="offset points", xytext=(0, 3),
+                        ha="center", fontsize=8.5, color="#444444")
+    short = {"bt": "naive\nBT", "fc": "BT + forward\nchecking",
+             "full": "BT + full\ninference", "hc": "hill\nclimbing",
+             "sa": "simulated\nannealing"}
+    ax.set_xticks(range(len(ALL)), [short[s] for s in ALL], fontsize=8.5)
+    ax.set_ylabel("solved, % of all 75 instances")
+    ax.set_ylim(0, 112)
+    style(ax)
+    # The alpha pair is explained in text; a color legend would mislead
+    # (colors mean solver identity here, not budget).
+    ax.set_title(f"Doubling the budget: {label_a} (faded) vs "
+                 f"{label_b} (solid), identical instances", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(outdir / "fig4_budget.png", dpi=200)
+    plt.close(fig)
+
+
 def make_figures(csv_path, outdir):
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -172,5 +207,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--csv", default="experiments/results/results.csv")
     ap.add_argument("--outdir", default="experiments/results")
+    ap.add_argument("--compare", metavar="SECOND_CSV", default=None,
+                    help="also draw fig4: solve rate under two budgets "
+                         "(--csv = smaller budget, SECOND_CSV = larger)")
     args = ap.parse_args()
     make_figures(args.csv, args.outdir)
+    if args.compare:
+        fig_budget(load(args.csv), load(args.compare), Path(args.outdir))
+        print("fig4_budget.png written")
