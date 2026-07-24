@@ -30,15 +30,14 @@ scratch and show it running."
 ```
 git clone https://github.com/AnnieBaghumyan/LightUp.git
 cd LightUp
-git checkout foundation
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-> NOTE: delete the `git checkout foundation` line once `foundation` is
-> merged into `main` — do the merge BEFORE recording (verified 2026-07-24:
-> a fresh clone + these commands + the tests all pass on `foundation`).
+> Prerequisite: `foundation` must be merged into `main` before recording,
+> so a fresh clone gets the project (verified 2026-07-24: fresh clone +
+> these commands + all 51 tests pass).
 
 **Voice:** "Setup is four commands: clone, create a virtual environment,
 activate it, and install the two dependencies — pytest for the tests and
