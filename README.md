@@ -58,11 +58,15 @@ python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
 # The "New puzzle" bar sets width x height (3-25) and easy/medium/hard.
 python -m lightup play puzzles/thesis7x7.txt
 
-# Solve a puzzle with the AI (naive backtracking baseline for now):
+# Solve a puzzle with the AI:
+#   --solver bt    naive backtracking baseline
+#   --solver fc    + forward checking and pruning
+#   --solver full  + propagation to a fixpoint (default)
 python -m lightup solve puzzles/thesis7x7.txt
+python -m lightup solve puzzles/thesis7x7.txt --solver bt         # compare stats
 python -m lightup solve puzzles/corner2.txt --log                 # decision log
 python -m lightup solve puzzles/corner2.txt --step                # watch it think
-# prints search stats: nodes, conflicts, backtracks, time
+# prints search stats: nodes, conflicts, backtracks, propagations, time
 
 # Generate random solvable puzzles (solution-first construction):
 python -m lightup generate 10x10 --seed 7                  # print it
@@ -99,6 +103,7 @@ lightup/gui.py        Tkinter hand-play window (BoardView + PlayApp)
 lightup/generator.py  random solvable puzzles (solution-first construction)
 lightup/solver.py     shared solver interface: SolveResult, Stats, observer
 lightup/backtracking.py  naive backtracking baseline (CSP, Ch. 6)
+lightup/csp.py        smart backtracking: forward checking / full inference
 solvers.md            how each solving approach works and how to measure it
 puzzles/              puzzle instance files
 tests/                pytest suite

@@ -114,15 +114,71 @@ python -m lightup play puzzles/thesis7x7.txt             # GUI animation
 
 ---
 
+## 2. Smart backtracking (`lightup/csp.py`)
+
+Same search skeleton, but the solver *maintains knowledge* per cell
+(bulb / no-bulb / undecided, plus a lit-counter) instead of re-validating
+the board from scratch at every node. Two configurations:
+
+### `fc` — forward checking + pruning
+
+* Placing a bulb immediately marks every cell it sees as no-bulb
+  (rule R2 enforced the moment it becomes enforceable).
+* Before recursing: prune if any clue can no longer be met (R3 window) or
+  any unlit cell has no possible lighter left (R1 support) — the same
+  conditions the baseline rediscovers by full rescans, answered here from
+  the maintained state.
+
+### `full` — forward checking + propagation to a fixpoint
+
+Adds inference rules that *assign* rather than merely prune, looping until
+nothing changes:
+
+* **saturated clue** (placed = n): remaining neighbors → no-bulb;
+* **exhausted clue** (placed + free = n): free neighbors → bulb;
+* **forced lighter**: an unlit cell with exactly one undecided cell able
+  to light it forces that bulb.
+
+This is Pulles (2021)'s "trivial solver" generalized into in-search
+inference — a hand-rolled GAC-style propagation on the counting
+constraints. Root-level propagation runs before any search, so forced
+moves (0/4-clues, corner 2s…) are inference, not decisions.
+
+### Variable ordering
+
+`smart` (default): decide first a free neighbor of the tightest unfinished
+clue (slack = free − still-needed); otherwise a candidate lighter of the
+most-constrained unlit cell. Classic MRV degenerates here: domains are
+binary and propagation auto-assigns forced cells before search sees them,
+so the degree/most-constrained idea does the work. `static` (row-major) is
+available for ablation runs.
+
+### Measured (same machine, single runs)
+
+| puzzle | solver | nodes | conflicts | propagations | time |
+|---|---|---|---|---|---|
+| thesis 7×7 | naive | 308 | 149 | 0 | 15 ms |
+| thesis 7×7 | fc | 12 | 1 | 31 | 0.2 ms |
+| thesis 7×7 | full | **0** | 0 | 41 | 0.3 ms |
+| 14×14 hard | naive | 333 | 153 | 0 | 64 ms |
+| 14×14 hard | fc | 146 | 61 | 375 | 8 ms |
+| 14×14 hard | full | 23 | 0 | 149 | 5 ms |
+
+The zero is the headline: the published 7×7 is solved **entirely by
+propagation, with no search at all** — consistent with how publishers
+curate puzzles to be human-deducible. The systematic experiments (many
+seeds, growing sizes) belong to the experiment harness step.
+
+```
+python -m lightup solve puzzles/thesis7x7.txt --solver bt|fc|full
+```
+
+---
+
 ## Planned
 
-* **Backtracking + heuristics** — MRV/degree variable ordering, value
-  ordering. Same search, better decisions first.
-* **Backtracking + inference** — forward checking with explicit per-cell
-  domains, clue propagation (0/4-clues and saturated/exhausted clues force
-  their neighbors), optionally AC-3 on the binary no-mutual-illumination
-  constraints. Same conditions as the baseline's lookahead, computed
-  incrementally instead of by full re-scan.
 * **Hill climbing** and **simulated annealing** — local search over
   complete assignments with a violation-counting objective; a different
   paradigm entirely, incomplete but often fast.
+* **Experiment harness** — instance sweeps (size × difficulty × seeds),
+  aggregated stats, matplotlib figures for the report and slides.

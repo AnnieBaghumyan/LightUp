@@ -24,10 +24,11 @@ from dataclasses import dataclass, field
 @dataclass
 class Stats:
     """Search-effort counters, the currency of our solver comparison."""
-    nodes: int = 0        # decisions tried (bulb or no-bulb)
-    conflicts: int = 0    # decisions rejected by the consistency check
-    backtracks: int = 0   # bulb placements undone
-    time_ms: float = 0.0  # wall-clock solving time
+    nodes: int = 0         # decisions tried (bulb or no-bulb)
+    conflicts: int = 0     # decisions rejected by the consistency check
+    backtracks: int = 0    # bulb placements undone
+    propagations: int = 0  # assignments made by inference, not by search
+    time_ms: float = 0.0   # wall-clock solving time
 
 
 @dataclass

@@ -55,8 +55,10 @@ def main(argv=None):
     solve = sub.add_parser("solve", parents=[common],
                            help="solve a puzzle with an AI solver")
     solve.add_argument("puzzle", help="path to a puzzle .txt file")
-    solve.add_argument("--solver", choices=["bt"], default="bt",
-                       help="bt = naive backtracking baseline (default)")
+    solve.add_argument("--solver", choices=["bt", "fc", "full"],
+                       default="full",
+                       help="bt = naive baseline, fc = forward checking, "
+                            "full = forward checking + propagation (default)")
     solve.add_argument("--timeout", type=float, default=None, metavar="SEC",
                        help="give up after this many seconds")
     solve.add_argument("--log", action="store_true",
@@ -141,6 +143,9 @@ def main(argv=None):
 
     elif args.command == "solve":
         from .backtracking import solve as bt_solve
+        from .csp import solve_forward, solve_full
+        chosen = {"bt": bt_solve, "fc": solve_forward,
+                  "full": solve_full}[args.solver]
 
         observer = None
         if args.log or args.step:
@@ -150,7 +155,7 @@ def main(argv=None):
                     print(render(puzzle, bulbs, **style))
                     input("-- Enter = next step, Ctrl+C = abort --")
 
-        result = bt_solve(puzzle, observer=observer, timeout_s=args.timeout)
+        result = chosen(puzzle, observer=observer, timeout_s=args.timeout)
 
         print(render(puzzle, result.bulbs, **style))
         if result.solved:
@@ -161,7 +166,8 @@ def main(argv=None):
             print("NO SOLUTION - the search space is exhausted.")
         s = result.stats
         print(f"stats: nodes={s.nodes}  conflicts={s.conflicts}  "
-              f"backtracks={s.backtracks}  time={s.time_ms:.1f}ms")
+              f"backtracks={s.backtracks}  propagations={s.propagations}  "
+              f"time={s.time_ms:.1f}ms")
 
     elif args.command == "check":
         bulbs = parse_bulbs(args.bulbs)
