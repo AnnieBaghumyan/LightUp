@@ -50,7 +50,9 @@ def main(argv=None):
                        help='bulb positions, e.g. "0,0 1,3 2,4"')
 
     play = sub.add_parser("play", help="play a puzzle in a window (Tkinter)")
-    play.add_argument("puzzle", help="path to a puzzle .txt file")
+    play.add_argument("puzzle", nargs="?", default=None,
+                      help="path to a puzzle .txt file; omit for a fresh "
+                           "random 10x10 (medium)")
 
     solve = sub.add_parser("solve", parents=[common],
                            help="solve a puzzle with an AI solver")
@@ -91,12 +93,23 @@ def main(argv=None):
     gen.add_argument("--show-solution", action="store_true",
                      help="print the bulb placement the puzzle was built from")
 
+    if argv is None:
+        import sys
+        argv = sys.argv[1:]
+    if not argv:
+        argv = ["play"]   # bare `python -m lightup` just opens the game
     args = ap.parse_args(argv)
 
     if args.command == "play":
         # Imported here so the CLI works even on machines without Tkinter.
-        from .gui import run
-        run(args.puzzle)
+        if args.puzzle is None:
+            from .generator import DIFFICULTY, generate
+            from .gui import run_puzzle
+            puzzle, _ = generate(10, 10, **DIFFICULTY["medium"])
+            run_puzzle(puzzle, title="generated 10x10 (medium)")
+        else:
+            from .gui import run
+            run(args.puzzle)
         return 0
 
     if args.command == "generate":

@@ -255,3 +255,19 @@ Headline numbers from the first full sweep (hard instances):
   non-obvious finding worth discussing in the report.
 
 Reproduce: `python experiments/run.py` then `python experiments/plot.py`.
+
+### Budget sensitivity (5 s vs 10 s, identical instances)
+
+Doubling the per-run budget (`results_10s.csv`, fig 4) changed almost
+nothing: bt 45→48, fc 68→70, sa 45→47, full 75→75, and **hill climbing
+exactly 21→21**. Predictions made before the run: full unchanged (never
+needed the time), fc/bt small gains (exponential wall — doubling time buys
+a fraction of a size step), hc zero (restarts do not accumulate progress;
+its failures are local optima, i.e. structural). All confirmed. One
+prediction was wrong and is worth stating honestly: we expected SA to be
+the big winner (it accumulates progress within a run), but +2 shows its
+large-board failures also need order-of-magnitude more budget, not 2×.
+The one-line conclusion: **more time helps solvers that are slow, not
+solvers that are stuck** — solve-rate differences between our solvers are
+overwhelmingly structural (inference vs. none, escape mechanism vs. none),
+not artifacts of the budget choice.
