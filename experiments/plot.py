@@ -112,9 +112,10 @@ def fig_paradigms(rows, outdir, difficulty="hard"):
         sizes = sorted(per_size)
         rate = [100 * sum(v) / len(v) for v in
                 (per_size[k] for k in sizes)]
+        # No end labels here: several lines end at the same value (0%)
+        # and the labels would collide; the legend carries identity.
         ax.plot(sizes, rate, marker="o", markersize=5, linewidth=2,
                 color=COLOR[s], label=LABEL[s])
-        end_label(ax, sizes, rate, s, COLOR[s])
     ax.set_xlabel("board side (n x n)")
     ax.set_ylabel("solved within timeout, %")
     ax.set_ylim(-5, 105)

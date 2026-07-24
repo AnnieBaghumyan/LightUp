@@ -228,7 +228,30 @@ python -m lightup solve puzzles/gen14x14_hard5.txt --solver sa --seed 1 --timeou
 
 ---
 
-## Planned
+## 4. Experiments (`experiments/run.py`, `experiments/plot.py`)
 
-* **Experiment harness** — instance sweeps (size × difficulty × seeds),
-  aggregated stats, matplotlib figures for the report and slides.
+The systematic sweep: sizes 7–25, three difficulty presets, five seeded
+instances per bucket, all five solvers on **identical** instances, 5 s
+budget per run (375 runs, ~11 min). Results: `experiments/results/
+results.csv` plus three figures (the results slides of the presentation).
+
+Headline numbers from the first full sweep (hard instances):
+
+* **Solve rate within 5 s**: full inference **75/75 (100 %)** across all
+  sizes; forward checking 68/75; naive BT 45/75 (dies at 25×25);
+  SA 45/75; HC 21/75.
+* **Scaling (fig 1)**: naive BT's node curve leaves the chart after 18×18;
+  fc and full stay 1–2 orders of magnitude below it. Note the honest
+  nuance: full needs ~2× fewer nodes than fc but is slightly *slower* per
+  board at large sizes — propagation costs time per node; fc wins on raw
+  time while full wins on robustness (it is the only solver that never
+  timed out).
+* **Paradigms (fig 2)**: SA tracks the complete solvers up to 14×14, then
+  degrades; HC collapses much earlier — SA ≫ HC throughout, reproducing
+  Perera et al. (2021).
+* **Density (fig 3)**: at 14×14, HC solved *nothing* at easy/medium
+  density within budget yet sometimes solved hard ones — denser clue
+  constraints create more local optima for a pure descender, a genuinely
+  non-obvious finding worth discussing in the report.
+
+Reproduce: `python experiments/run.py` then `python experiments/plot.py`.

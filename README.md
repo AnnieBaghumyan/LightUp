@@ -108,6 +108,7 @@ lightup/solvers/      one module per solving approach:
   backtracking.py     naive backtracking baseline (CSP, Ch. 6)
   csp.py              smart backtracking: forward checking / full inference
   local.py            local search: hill climbing / simulated annealing
+experiments/          sweep runner + figure generation (see solvers.md §4)
 solvers.md            how each solving approach works and how to measure it
 puzzles/              puzzle instance files
 tests/                pytest suite
