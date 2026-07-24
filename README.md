@@ -62,6 +62,8 @@ python -m lightup play puzzles/thesis7x7.txt
 #   --solver bt    naive backtracking baseline
 #   --solver fc    + forward checking and pruning
 #   --solver full  + propagation to a fixpoint (default)
+#   --solver hc    hill climbing with random restarts (add --seed N)
+#   --solver sa    simulated annealing (add --seed N)
 python -m lightup solve puzzles/thesis7x7.txt
 python -m lightup solve puzzles/thesis7x7.txt --solver bt         # compare stats
 python -m lightup solve puzzles/corner2.txt --log                 # decision log
@@ -105,6 +107,7 @@ lightup/solvers/      one module per solving approach:
   base.py             shared SolveResult, Stats, observer contract
   backtracking.py     naive backtracking baseline (CSP, Ch. 6)
   csp.py              smart backtracking: forward checking / full inference
+  local.py            local search: hill climbing / simulated annealing
 solvers.md            how each solving approach works and how to measure it
 puzzles/              puzzle instance files
 tests/                pytest suite

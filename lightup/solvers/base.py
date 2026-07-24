@@ -37,3 +37,6 @@ class SolveResult:
     bulbs: set                     # the solution found (empty if none)
     stats: Stats = field(default_factory=Stats)
     timed_out: bool = False
+    best_cost: int = None          # local search only: best objective value
+                                   # reached (0 = solved); None for tree
+                                   # search, which has no partial quality

@@ -55,10 +55,13 @@ def main(argv=None):
     solve = sub.add_parser("solve", parents=[common],
                            help="solve a puzzle with an AI solver")
     solve.add_argument("puzzle", help="path to a puzzle .txt file")
-    solve.add_argument("--solver", choices=["bt", "fc", "full"],
+    solve.add_argument("--solver", choices=["bt", "fc", "full", "hc", "sa"],
                        default="full",
                        help="bt = naive baseline, fc = forward checking, "
-                            "full = forward checking + propagation (default)")
+                            "full = + propagation (default), "
+                            "hc = hill climbing, sa = simulated annealing")
+    solve.add_argument("--seed", type=int, default=None,
+                       help="random seed (hc/sa only, for reproducible runs)")
     solve.add_argument("--timeout", type=float, default=None, metavar="SEC",
                        help="give up after this many seconds")
     solve.add_argument("--log", action="store_true",
@@ -142,9 +145,17 @@ def main(argv=None):
         print(render(puzzle, **style))
 
     elif args.command == "solve":
-        from .solvers import solve_forward, solve_full, solve_naive
+        from .solvers import (solve_annealing, solve_forward, solve_full,
+                              solve_hillclimb, solve_naive)
         chosen = {"bt": solve_naive, "fc": solve_forward,
-                  "full": solve_full}[args.solver]
+                  "full": solve_full}.get(args.solver)
+        if chosen is None:
+            # Local search: incomplete, randomized -> takes a seed and
+            # needs a time budget even when none was given explicitly.
+            local = {"hc": solve_hillclimb, "sa": solve_annealing}[args.solver]
+            budget = args.timeout if args.timeout is not None else 10
+            chosen = lambda p, observer=None, timeout_s=None: \
+                local(p, observer, timeout_s=budget, seed=args.seed)
 
         observer = None
         if args.log or args.step:
@@ -160,7 +171,10 @@ def main(argv=None):
         if result.solved:
             print("SOLVED")
         elif result.timed_out:
-            print(f"TIMED OUT after {args.timeout}s - no solution found yet")
+            print("TIMED OUT - no solution found within the budget")
+            if result.best_cost is not None:
+                print(f"best state reached: {result.best_cost} violation(s) "
+                      "remaining")
         else:
             print("NO SOLUTION - the search space is exhausted.")
         s = result.stats

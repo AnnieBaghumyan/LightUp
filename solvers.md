@@ -180,10 +180,55 @@ not project scope.
 
 ---
 
+## 3. Local search (`lightup/solvers/local.py`)
+
+A different paradigm (AIMA Ch. 4): instead of building a solution cell by
+cell, start from a COMPLETE assignment and repair it.
+
+| element | choice |
+|---|---|
+| State | a full bulb set (any subset of white cells) |
+| Objective | cost(B) = unlit cells + bulb-seeing pairs + Σ\|placed−n\| — one term per rule, and **cost = 0 ⟺ solved** |
+| Moves | add / remove / relocate a bulb (the 3-action neighborhood of Perera et al. 2021) |
+| Start | random full lighting (Pulles Alg. 1) — R1 and R2 hold by construction, so initial cost is pure clue deviation |
+
+**Hill climbing (`hc`)**: sample 30 random neighbors per step, jump to the
+best strict improvement; a local optimum triggers a random restart.
+**Simulated annealing (`sa`)**: one random proposal at a time, Metropolis
+acceptance exp(−Δ/T), geometric cooling (t0 = 2.5, ×0.9995 per step),
+reheat + fresh state when cooled out.
+
+Both are **incomplete**: they cannot prove unsolvability and may miss
+solutions within a budget — that trade-off against the complete family is
+exactly what the experiments quantify. Runs are reproducible via `--seed`.
+Stats mapping: nodes = states evaluated / proposals, conflicts = stuck
+steps / rejected proposals, backtracks = restarts / reheats. On timeout,
+`best_cost` reports how close the best state came (violations remaining).
+
+### Measured (same machine, single seeded runs)
+
+| puzzle | solver | evaluations | restarts/reheats | outcome | time |
+|---|---|---|---|---|---|
+| thesis 7×7 | hc | 363 900 | 10 418 | solved | 3 640 ms |
+| thesis 7×7 | sa | 15 627 | 1 | solved | 153 ms |
+| 14×14 hard | hc | 526 260 | 12 496 | **timed out at cost 1** | 20 s budget |
+| 14×14 hard | sa | 52 202 | 4 | solved | 1 808 ms |
+
+Two stories here. First, SA clearly beats HC — reproducing Perera et
+al.'s central result with our own implementation. Second, the hc row on
+the hard board is the local-optimum phenomenon in one line: twelve
+thousand restarts, twenty seconds, permanently one violation away from
+the goal. And for perspective: BT + full inference solves the same board
+in 5 ms — complete search with inference dominates on these sizes.
+
+```
+python -m lightup solve puzzles/thesis7x7.txt --solver hc --seed 1
+python -m lightup solve puzzles/gen14x14_hard5.txt --solver sa --seed 1 --timeout 20
+```
+
+---
+
 ## Planned
 
-* **Hill climbing** and **simulated annealing** — local search over
-  complete assignments with a violation-counting objective; a different
-  paradigm entirely, incomplete but often fast.
 * **Experiment harness** — instance sweeps (size × difficulty × seeds),
   aggregated stats, matplotlib figures for the report and slides.
