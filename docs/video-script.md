@@ -71,39 +71,36 @@ from three to twenty-five, three difficulties."
 *(Do on camera: place 2-3 bulbs, one X, create one red conflict, fix it,
 then press N for a new board.)*
 
-## Scene 5 — watching the AI think (~60 s) · screen: same window
+## Scene 5 — all five solvers, animated (~75 s) · screen: the game window
 
-**Voice:** "Now the AI. The dropdown holds all five solvers. First,
-naive backtracking: the animation replays every decision — bulbs
-appear, conflicts flash red, backtracking removes them, and the status
-bar counts nodes in real time. You can pause, single-step, or jump to
-the end. Same board, full inference: almost everything is deduced in
-one cascade, with barely any red. And here is simulated annealing — a
-completely different idea: it starts from a full random placement and
-repairs it, so the bulbs churn until the violations reach zero. All
-five solvers stream through this same animation."
-*(Do on camera: open the dropdown slowly so all five entries are
-readable; naive Solve on a 10x10 for ~10 s at medium speed, Stop; "BT +
-full inference" Solve to the end; "simulated annealing" Solve for ~8 s.)*
+**Voice:** "Now the AI. The dropdown holds all five solvers, and every
+one animates through the same replay controls. Naive backtracking:
+bulbs appear, conflicts flash red, backtracking removes them — the
+status bar counts nodes in real time. Forward checking: same search,
+far fewer wrong turns. Full inference: almost the whole board is
+deduced in one cascade, with barely any red — the way a human solves
+it. And now the other family. Hill climbing repairs a random full
+placement — watch it improve, and sometimes give up and restart.
+Simulated annealing does the same but tolerates temporary damage — the
+bulbs churn, and the violations melt to zero. Five algorithms, one
+window."
+*(Do on camera, all on the SAME 10x10 board: open the dropdown slowly so
+all five entries are readable, then run each in order — naive ~10 s at
+medium speed then Stop; fc to the end; full to the end; hc ~8 s; sa to
+the end. Keep each transition snappy.)*
 
-## Scene 6 — command line, all five solvers (~40 s) · screen: terminal
+## Scene 6 — the headline number (~20 s) · screen: terminal
 
 ```
 python -m lightup solve puzzles/thesis7x7.txt --solver bt
-python -m lightup solve puzzles/thesis7x7.txt --solver fc
 python -m lightup solve puzzles/thesis7x7.txt --solver full
-python -m lightup solve puzzles/thesis7x7.txt --solver hc --seed 1
-python -m lightup solve puzzles/thesis7x7.txt --solver sa --seed 1
 ```
 
-**Voice:** "The same five solvers run from the command line with search
-statistics — naive backtracking, forward checking, full inference, hill
-climbing, simulated annealing. On this published seven-by-seven the
-naive solver needs three hundred and eight nodes, forward checking
-twelve, and full inference zero — the whole puzzle falls to deduction.
-The two local-search solvers find it too, by repairing random
-placements. The ideas behind each solver, and how they compare across
-hundreds of boards, are in our presentation and report."
+**Voice:** "Everything also runs from the command line with search
+statistics. One number to remember: on this published puzzle, naive
+backtracking needs three hundred and eight search nodes — full
+inference needs zero. The ideas behind each solver, and how they
+compare across hundreds of boards, are in our presentation and report."
 
 ## Scene 7 — experiments (~25 s) · screen: terminal, then the figure
 
