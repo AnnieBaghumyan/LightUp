@@ -50,7 +50,10 @@ python -m lightup check puzzles/corner2.txt --bulbs "0,1 1,0 2,2"
 # Plain-terminal fallback
 python -m lightup show puzzles/thesis7x7.txt --ascii --no-color
 
-# Play the game in a window.
+# Play the game in a window.  With no arguments a fresh random 10x10
+# board opens; give a file to play a specific puzzle.
+python -m lightup
+#
 #   left click  = place/remove with the selected tool (Bulb or X)
 #   right click = always toggle an X ("no bulb here" note, not validated)
 #   keys: B bulb tool, X mark tool, R reset, N new puzzle
