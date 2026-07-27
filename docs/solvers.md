@@ -241,18 +241,32 @@ Headline numbers from the first full sweep (hard instances):
   sizes; forward checking 68/75; naive BT 45/75 (dies at 25×25);
   SA 45/75; HC 21/75.
 * **Scaling (fig 1)**: naive BT's node curve leaves the chart after 18×18;
-  fc and full stay 1–2 orders of magnitude below it. Note the honest
-  nuance: full needs ~2× fewer nodes than fc but is slightly *slower* per
-  board at large sizes — propagation costs time per node; fc wins on raw
-  time while full wins on robustness (it is the only solver that never
-  timed out).
+  fc and full stay 1–2 orders of magnitude below it, and the gap widens
+  with size (×7 at 7×7, ×160 at 14×14) — inference changes the growth
+  rate, not just a constant factor.
+* **When propagation pays (the precise version)**: full inference always
+  expands about half the nodes of forward checking, but whether that
+  saves *time* depends on clue density, not on size. On easy boards full
+  wins at every size and by 35× at 25×25 (7.7 ms vs 275 ms); on hard
+  boards fc wins at every size (18.9 ms vs 43.8 ms at 25×25). Propagation
+  is an investment paid at every node: clue-dense boards repay it many
+  times over, sparse boards do not. Figure 1 plots hard instances, i.e.
+  the fc-favourable side of this story. Full inference nevertheless
+  solved 75/75 against fc's 68/75 — it buys robustness everywhere, and
+  speed wherever there is something to deduce.
 * **Paradigms (fig 2)**: SA tracks the complete solvers up to 14×14, then
   degrades; HC collapses much earlier — SA ≫ HC throughout, reproducing
   Perera et al. (2021).
-* **Density (fig 3)**: at 14×14, HC solved *nothing* at easy/medium
-  density within budget yet sometimes solved hard ones — denser clue
-  constraints create more local optima for a pure descender, a genuinely
-  non-obvious finding worth discussing in the report.
+* **Density inversion (fig 3)**: sparse "hard" boards are often *easier*
+  for solvers. HC at 10×10 solved 0/5 easy, 0/5 medium but 5/5 hard;
+  SA at 18×18 solved 0/5 easy, 0/5 medium, 4/5 hard. Meanwhile the
+  informed solvers prefer the opposite (fc: 25/25 easy vs 22/25 hard).
+  A clue is *information* to a solver that can reason with it and an
+  *obstacle* to one that can only test it — for local search each clue is
+  one more penalty term, roughening the landscape. Note the raw search
+  space moves the other way: at 14×14 hard boards have ~172 white cells
+  vs ~146 for easy. Our presets therefore model human difficulty
+  (deduction-chain length), not search difficulty.
 
 Reproduce: `python experiments/run.py` then `python experiments/plot.py`.
 
