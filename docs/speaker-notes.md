@@ -29,7 +29,7 @@ graded) and hand over cleanly between slides 4→5 and 8→9.
 
 ## Slide 3 — Why LightUp is a good AI problem  (~1 min)
 
-**Say:** Why is this a good AI problem? Three reasons. First, it is NP-complete — proven by reduction from circuit satisfiability — so no algorithm can be expected to scale forever, and cleverness has to earn its keep. Second, it is a very clean constraint-satisfaction problem: one yes-or-no variable per white cell. Third, it scales: our generator produces boards from three-by-three up to twenty-five-by-twenty-five with tunable difficulty, which gives us unlimited test data. Earlier work solved LightUp with SAT encodings, with local search, and with evolutionary algorithms — we compare directly against the local-search results later.
+**Say:** Why is this a good AI problem? Three reasons. First, it is NP-complete: it was proven in 2005 to be as hard as circuit satisfiability. In plain terms, the time needed to solve a puzzle grows explosively as the board grows, so every solver eventually meets a board it cannot finish. A better algorithm does not remove that wall — it only pushes it further away, and measuring how far each technique pushes it is what this project is about. Second, it is a very clean constraint-satisfaction problem: one yes-or-no variable per white cell. Third, it scales: our generator produces boards from three-by-three up to twenty-five-by-twenty-five with tunable difficulty, which gives us unlimited test data. Earlier work solved LightUp with SAT encodings, with local search, and with evolutionary algorithms — we compare directly against the local-search results later.
 
 *Stage cue: Prior work stays at one sentence — the course asks for brevity here.*
 
