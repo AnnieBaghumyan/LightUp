@@ -3,9 +3,29 @@
 Mechanical fixes to apply in the Overleaf source. Line numbers refer to
 `docs/report.tex`; the same text is easy to find in Overleaf.
 
-> Note: `docs/report.tex` in this repo has lost every backslash
-> (`documentclass`, `usepackage`, …) and will not compile. Overleaf holds
-> the working source — fix there, and re-export a clean copy afterwards.
+## Compile status (checked 2026-07-28)
+
+The source is now syntactically sound: braces balance, environments pair,
+275 backslashes intact. (An earlier export of this file had lost all
+backslashes; that copy has been replaced.) Two problems remain:
+
+1. **Two undefined references print as `??`** — `\ref{sec:csp}` (line 180)
+   and `\ref{chap:results}` (line 275). The only labels defined are
+   `fig:example`, `fig:boardarray`, `fig:trivial`. See §2 below.
+2. **It will not compile outside Overleaf**: the three images it includes
+   are not in the repository —
+   `59ED429E-C5DC-474F-BA71-9CEB906A913D.jpg`,
+   `Screenshot 2026-07-23 at 16.15.38.png`,
+   `Screenshot 2026-07-28 at 16.48.10.png`.
+   A missing graphics file is a hard error, so the submitted source will
+   not rebuild for the grader. Commit the images next to `report.tex`,
+   and rename them while you are at it: spaces and multiple dots in a
+   filename (`… 16.15.38.png`) make `\includegraphics` fragile because it
+   has to guess where the extension starts. Something like
+   `fig-example.jpg`, `fig-board-array.png`, `fig-trivial.png` is safe.
+
+None of the spelling fixes in §1 have been applied yet (all 16 still
+present as of this check).
 
 ## 1. Spelling and grammar
 
@@ -67,9 +87,8 @@ Nikoli, ``Light Up (Bijutsukan)'',
 \href{https://www.nikoli.co.jp/en/puzzles/akari/}{nikoli.co.jp/en/puzzles/akari}
 ```
 
-Also check the two existing `\href` targets: in the exported copy they
-read `httpswww.cs.ru.nl...` and `httpsarxiv.orgpdf2107.10429` (missing
-`://` and `/`). Verify they are correct in Overleaf.
+(The two existing `\href` targets are fine — they were only mangled in
+the earlier broken export.)
 
 ## 5. Result tables
 
