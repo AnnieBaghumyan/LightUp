@@ -85,7 +85,7 @@ Light Up is played on a rectangular board of black and white cells; all boards u
 \begin{figure} [H]
     \centering
     \includegraphics[width=0.6\linewidth]{59ED429E-C5DC-474F-BA71-9CEB906A913D.jpg}
-    \caption{7 × 7 Light Up puzzle instance before and after solving}
+    \caption{$7\times7$ Light Up puzzle instance before and after solving}
     \label{fig:example}
 \end{figure}
 
@@ -112,7 +112,7 @@ In his "Analysis of Akari" paper\cite{analysis_akari} Bram Pulles built a SAT so
     \label{fig:trivial}
 \end{figure}
 
-His SAT solver translates the board into a boolean formula and passes it to the Z3 theorem prover, which finishes 40 × 40 puzzles in under a second. His backtracking solver starts from the trivial solver's base solution and sorts the remaining candidates so that cells next to numbered walls come first. It is far slower, needing minutes even for a 14 × 14 board, except on nearly empty boards where Z3 slows down and the simpler solver finishes first.
+His SAT solver translates the board into a boolean formula and passes it to the Z3 theorem prover, which finishes $40\times40$ puzzles in under a second. His backtracking solver starts from the trivial solver's base solution and sorts the remaining candidates so that cells next to numbered walls come first. It is far slower, needing minutes even for a $14\times14$ board, except on nearly empty boards where Z3 slows down and the simpler solver finishes first.
 
 \section{Relation to this project}
 
@@ -228,25 +228,23 @@ Simulated annealing sometimes accepts a move that makes the board worse, which p
 \label{sec:setup}
 
 A generator was written to supply puzzles, building each one from a solution. It places
-walls at a chosen density, mirrored through the centre of the board, then repeatedly puts a
-bulb on a random unlit cell until the board is lit. Each wall then gets, with some
+walls at a chosen density, mirrored through the centre of the board, then puts bulbs on
+random unlit cells until the board is lit. Each wall then gets, with some
 probability, the number of bulbs next to it, and the bulbs are removed. The result always
 has a solution, but not always only one, a point that returns in
 Chapter~\ref{chap:results}. Three presets control the densities: easy boards have 25\%
 walls and a number on every wall, medium boards 18\% and 80\%, and hard boards 12\% and
-55\%. The names describe the effort a person needs, because fewer clues make the deduction
-longer.
+55\%. The names describe human effort, since fewer clues make the deduction longer.
 
 Five board sizes were used ($7\times7$, $10\times10$, $14\times14$, $18\times18$ and
 $25\times25$), with the three presets and five seeded puzzles each, giving 75 puzzles.
 Every solver was given the same puzzles and five seconds per run, so the sweep contains 375
-runs. Because the generator depends only on the size, the preset and the seed, any run can
-be repeated from those three values.
+runs. Because the generator depends only on size, preset and seed, any run can be repeated
+from those three values.
 
-Each run records whether it succeeded, the time taken, the search nodes (or states checked),
-the conflicts, the propagations, and for local search the lowest cost reached. Success is
-decided by the validator, not by comparison with a stored answer, because a puzzle may have
-several valid solutions.
+Each run records success, time, search nodes (or states checked), conflicts, propagations,
+and for local search the lowest cost reached. Success is decided by the validator, not by
+comparison with a stored answer, because a puzzle may have several solutions.
 
 
 \chapter{Evaluation}
@@ -341,7 +339,7 @@ Perera~\cite{light_up_ai} on different puzzles and with a separate implementatio
 How each solver fails is as interesting as the counts. Because the cost function reports
 the violations left, a failed run still shows how close it came: hill climbing ended its
 failed runs with 13 violations on average, simulated annealing with 5.5. In one
-twenty-second run it restarted 12{,}496 times and never removed the last violation, because
+twenty-second run it restarted 12{,}496 times without removing the last violation, because
 every available move made the board worse.
 
 \begin{figure}[H]
@@ -352,8 +350,8 @@ every available move made the board worse.
     \label{fig:paradigms}
 \end{figure}
 
-Neither local search solver can prove that a board has no solution, and within this budget
-complete search with inference was better than both at every size tested.
+Neither local search solver can prove a board has no solution, and within this budget
+complete search with inference beat both at every size.
 
 \subsection{What makes an instance hard}
 
@@ -378,7 +376,7 @@ reasons about constraints, a clue is information, so more clues make the board e
 a local search solver, which can only score a complete board, each clue is one more penalty
 term, so dense boards have more local optima. Problem size moves the other way: at
 $14\times14$ the hard preset leaves about 172 white cells against 146 for easy. The presets
-predict how hard a puzzle is for a person, not for a solver.
+predict difficulty for a person, not for a solver.
 
 \subsection{Sensitivity to the time budget}
 
