@@ -74,13 +74,13 @@ Light Up is a binary determination puzzle published by \textbf{Nikoli}\cite{niko
 
 The puzzle is also interesting as a computing problem. McPhail\cite{mcphail} proved that deciding whether a Light Up puzzle has a solution is NP-complete, by a reduction from Circuit-SAT. In the worst case the solving time therefore grows very fast as the board gets bigger, and no algorithm removes this limit. A better algorithm can only push it further away, and measuring how far each method pushes it is the goal of this project.
 
-The report continues as follows. Chapter 2 reviews earlier work and relates it to this project, Chapter 3 describes the five solvers and the experimental setup, and Chapter 4 presents the measurements, the conclusions and possible future work. All solvers, the generator and the experiment scripts were written in Python.
+The report continues as follows. Chapter 2 reviews earlier work, Chapter 3 describes the five solvers and the experimental setup, and Chapter 4 presents the measurements, the conclusions and future work. All solvers, the generator and the experiment scripts were written in Python.
 
 
 
 \section{Rules}
 
-Light Up is played on a rectangular board of black and white cells; all boards used here are square, of size $N \times N$. The player places light bulbs in white cells. A bulb lights its whole row and column, unless a black cell blocks the light, and no two bulbs may shine on each other. Some black cells carry a number from 0 to 4, which says how many bulbs must be placed in the cells sharing an edge with it; black cells without a number may have any number beside them. The puzzle is solved when every white cell is lit and all rules hold (Figure \ref{fig:example}). 
+Light Up is played on a rectangular board of black and white cells; all boards used here are square, of size $N \times N$. The player places light bulbs in white cells. A bulb lights its whole row and column unless a black cell blocks the light, and no two bulbs may shine on each other. Some black cells carry a number from 0 to 4, giving how many bulbs must sit in the cells sharing an edge with it; unnumbered black cells may have any number beside them. The puzzle is solved when every white cell is lit and all rules hold (Figure \ref{fig:example}). 
 
 \begin{figure} [H]
     \centering
@@ -127,19 +127,17 @@ Pulles is the closest earlier work, even though he does not use the words of con
 \label{sec:csp}
 The first approach is to formulate Light Up as a Constraint Satisfaction Problem (CSP), defined by variables X, a domain D and constraints C. Here X is the set of white cells, D is $\{$bulb, empty$\}$, and C holds three constraints: no two bulbs illuminate each other ($C_1$), every white cell is lit ($C_2$), and every numbered black cell has exactly the given number of bulbs next to it ($C_3$).
 
-Let $\text{\textbf{\textit{sight}}}(w)$ be the white cells sharing a row or column with $w \in X$ and not separated from it by a black cell, let $n_c$ and $N_c$ be a numbered cell's clue and its white neighbours, let $\text{\textbf{\textit{Clues}}}$ be all numbered cells, and let $b_w \in \{0, 1\}$ say whether $w$ holds a bulb.
-\newline
-  
-  \(C_1: \quad \forall\, w \in X,\ \forall\, w' \in \text{sight}(w): \quad b_w + b_{w'} \le 1\)
-\newline
+Let $\mathit{sight}(w)$ be the white cells sharing a row or column with $w \in X$ and not separated from it by a black cell, let $n_c$ and $N_c$ be a numbered cell's clue and its white neighbours, let $\mathit{Clues}$ be all numbered cells, and let $b_w \in \{0,1\}$ say whether $w$ holds a bulb:
 
-\(C_2: \quad \forall\, w \in X:           \quad b_w + \sum_{w' \in \text{sight}(w)} b_{w'} \ge 1\)
+\begin{align}
+  b_w + b_{w'} &\le 1 && \text{for all } w \in X,\ w' \in \mathit{sight}(w),
+    \tag{$C_1$} \\[2pt]
+  b_w + \sum_{w' \in \mathit{sight}(w)} b_{w'} &\ge 1 && \text{for all } w \in X,
+    \tag{$C_2$} \\[2pt]
+  \sum_{x \in N_c} b_x &= n_c && \text{for all } c \in \mathit{Clues}.
+    \tag{$C_3$}
+\end{align}
 
-\bigskip
-
-  \(C_3: \quad \forall\, c \in \text{Clues}: \quad \sum_{x \in N_c} b_x = n_c\)
-  
-\bigskip
 Solving the problem means assigning a value from D to every variable in X so that all constraints hold. All three are \emph{counting} constraints, because each limits how many bulbs a region may contain. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three solvers were built on this formulation, differing only in how much reasoning they do while branching: a naive baseline, forward checking, and full inference.
 
 \subsection{Naive Backtracking}
@@ -150,7 +148,7 @@ Solving the problem means assigning a value from D to every variable in X so tha
   assignment against $C_1$ and $C_3$ and recomputes the lit cells from scratch.
 
   One extra rule, called the \emph{doomed-cell} rule here, is needed to make this solver
-  usable. If a white cell $w$ is unlit, and $w$ and every cell in $\text{sight}(w)$ are
+  usable. If a white cell $w$ is unlit, and $w$ and every cell in $\mathit{sight}(w)$ are
   already decided empty, then $w$ can never be lit and the branch is abandoned at once.
   Without it the solver would still be correct, but it would explore huge subtrees that are
   already hopeless.
@@ -166,25 +164,29 @@ Solving the problem means assigning a value from D to every variable in X so tha
   most-constrained-variable heuristic: first an undecided neighbour of the clue with the
   least slack, then a cell that could light the unlit cell with the fewest options left.
 
-  Forward checking only checks, it never assigns. Let $\text{placed}(c)$ be the number of a
-  clue's neighbours holding a bulb and $\text{free}(c)$ the number still undecided. For
-  $C_3$, the branch fails as soon as $\text{placed}(c) > n_c$ or $\text{placed}(c) +
-  \text{free}(c) < n_c$. For $C_2$, if an unlit cell is decided empty and no undecided cell
-  remains in its sight, it can never be lit and the branch fails.
+  Forward checking only checks, it never assigns. Let $\mathit{placed}(c)$ and
+  $\mathit{free}(c)$ be the neighbours of a clue that hold a bulb and that are still
+  undecided. For $C_3$, the branch fails once $|\mathit{placed}(c)| > n_c$ or
+  $|\mathit{placed}(c)| + |\mathit{free}(c)| < n_c$. For $C_2$, if an unlit cell is decided
+  empty and no undecided cell remains in its sight, it can never be lit and the branch fails.
 
 
 \subsection{Backtracking with Full Inference}
 
   Full inference replaces the prune-only lookahead with a step that assigns values it can
-  prove are forced, repeating until a full pass changes nothing. Three rules drive this:
+  prove are forced, repeating until a full pass changes nothing. Writing $L(w)$ for the
+  undecided cells that could still light an unlit $w$, three rules drive this:
 
   \begin{align}
-  \text{placed}(c) = n_c &\;\Longrightarrow\; \forall x \in \text{free}(c):\ b_x \leftarrow 0
-  &&\text{(saturated clue)} \\
-  \text{placed}(c) + |\text{free}(c)| = n_c &\;\Longrightarrow\; \forall x \in \text{free}(c):\ b_x \leftarrow 1
-  &&\text{(exhausted clue)} \\
-  \bigl|\{x \in \{w\} \cup \text{sight}(w) : x \text{ undecided}\}\bigr| = 1,\ w \text{ unlit}
-  &\;\Longrightarrow\; b_x \leftarrow 1 &&\text{(forced lighter)}
+    |\mathit{placed}(c)| &= n_c
+      && \Longrightarrow\ b_x \leftarrow 0 \text{ for all } x \in \mathit{free}(c)
+      \tag{saturated clue} \\[2pt]
+    |\mathit{placed}(c)| + |\mathit{free}(c)| &= n_c
+      && \Longrightarrow\ b_x \leftarrow 1 \text{ for all } x \in \mathit{free}(c)
+      \tag{exhausted clue} \\[2pt]
+    |L(w)| &= 1
+      && \Longrightarrow\ b_x \leftarrow 1 \text{ for the single } x \in L(w)
+      \tag{forced lighter}
   \end{align}
 
   A saturated clue already has as many bulbs as it needs, so its remaining neighbours must
@@ -201,16 +203,18 @@ Solving the problem means assigning a value from D to every variable in X so tha
 
 \section{Local search}
 
-Local search was used for the second solution approach. Two solvers were implemented: hill climbing and simulated annealing. Both are incomplete algorithms that work on a complete-state formulation, evaluating whole board configurations rather than building a solution cell by cell. Both use a 3-action model, adding, removing or moving a bulb, and both precompute the board geometry so the lit cells are known after every move.
+Local search was used for the second solution approach. Two solvers were implemented: hill climbing and simulated annealing. Both are incomplete algorithms that work on a complete-state formulation, evaluating whole board configurations rather than building a solution cell by cell. Both use a 3-action model, adding, removing or moving a bulb, and both precompute the board geometry so the lit cells are known after each move.
 
 Both start from an informed initialization: bulbs are placed on randomly chosen unlit cells until every white cell is lit. An unlit cell is never in sight of a bulb already placed, so the board begins fully lit and with no two bulbs shining on each other, although some clues may still be violated.
 
 Progress is measured by a cost function that the agent minimizes. A solution has a cost of zero, and the agent is penalized for each unlit white cell, each numbered black cell with the wrong number of bulbs beside it, and each pair of bulbs shining on each other:
 
-\[ C(s) = \bigl|\{w \in X : w \text{ unlit}\}\bigr|
-        \;+\; \sum_{c \in \text{Clues}} |n_c - a_c|
-        \;+\; \bigl|\{\{u,v\} : u \in \text{sight}(v),\ b_u = b_v = 1\}\bigr| \]
-where $a_c$ is the actual number of bulbs next to clue $c$. The three terms count the unlit cells, the deviation of each clue, and the pairs of bulbs that see each other.
+\begin{align*}
+  C(s) = {}& \bigl|\{\,w \in X : w \text{ unlit}\,\}\bigr|
+           \;+\; \sum_{c \in \mathit{Clues}} |n_c - a_c| \\[2pt]
+         &{} + \bigl|\bigl\{\,\{u,v\} : u \in \mathit{sight}(v),\ b_u = b_v = 1\,\bigr\}\bigr|
+\end{align*}
+where $a_c$ is the actual number of bulbs next to clue $c$. The three terms count the unlit cells, the clue deviations, and the pairs of bulbs that see each other.
 
 \subsection{Hill Climbing}
 
@@ -254,8 +258,7 @@ Using the setup of Section~\ref{sec:setup}, Table~\ref{tab:solvesize} shows how 
 puzzles each solver finished inside the budget. Full inference solved every generated
 puzzle, and forward checking failed only on the largest boards. The naive solver started at
 15 out of 15 on $7\times7$ boards and solved nothing on $25\times25$. Simulated annealing
-reached the same total as the naive solver, while hill climbing solved about a quarter of
-the set.
+matched the naive solver's total, while hill climbing solved about a quarter of the set.
 
 \begin{table}[H]
   \centering
@@ -420,12 +423,12 @@ they ran.
 
 Three directions follow from the limitations above. The generator guarantees a solution but
 not a single one, so adding the uniqueness check described by Pulles~\cite{analysis_akari}
-would test the idea that boards with one solution allow much more to be worked out. The
-puzzle could also be solved as a satisfiability problem: the propagation rules used here
-are already a form of unit propagation, so a CNF encoding and a DPLL solver written from
-scratch would let a clause-based version be compared with this one. Finally, the presets
-could be set from measured search effort, giving a controlled way to produce puzzles of a
-chosen difficulty.
+would test whether boards with one solution allow much more to be worked out. The puzzle
+could also be solved as a satisfiability problem: the propagation rules here are already a
+form of unit propagation, so a CNF encoding and a DPLL solver written from scratch would
+let a clause-based version be compared with this one. Finally, the presets could be set
+from measured search effort, giving a controlled way to produce puzzles of a chosen
+difficulty.
 
 
 \begin{thebibliography}{9}
