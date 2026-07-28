@@ -291,6 +291,23 @@ choice.
 * B. Pulles (2021), *Analysis of Akari*, Radboud University — trivial
   solver (→ our inference), SAT encoding (the road not taken), generator
   and uniqueness post-processing, the 7×7 reference instance + solution.
+  Note for the lit review: Pulles is also our **CSP precedent**, though he
+  never uses CSP vocabulary — his trivial solver is constraint
+  propagation, his candidate sorting (clue-adjacent cells first) is a
+  variable-ordering heuristic, and his early clue-failure check is our
+  `fc` clue-window test. Our contribution relative to him: formalise it
+  as a CSP, and move that inference from a one-off preprocessing step
+  into the search loop, run to a fixpoint at every node — then measure
+  what the change is worth.
+* M. Çelik, H. Erdoğan, F. H. Tahaoğlu, T. Uras, E. Erdem (2009),
+  *Comparing ASP and CP on Four Grid Puzzles*, RCRA 2009, CEUR-WS
+  Vol. 589 — models Akari (with Kakuro, Nurikabe, Heyawake) in Answer
+  Set Programming and in Constraint Programming, comparing Clasp against
+  the CP system Comet on representation and on time/memory. This is the
+  explicit constraint-programming precedent for Akari.
+  **Read it before citing** — the citation and scope are verified, the
+  internal modelling details are not.
+  https://ceur-ws.org/Vol-589/paper01.pdf
 * L. Sun, J. Browning, R. Perera (2021), arXiv:2107.10429 — HC/SA
   formulation, 3-action neighborhood, SA ≫ HC (we reproduce).
 * S. Salcedo-Sanz et al. (2009), ICGA Journal 32 — evolutionary
