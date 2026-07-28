@@ -50,7 +50,7 @@
 \end{center}
 \vspace{5mm}
 
-Light Up, also known as Akari, is a Japanese puzzle game with simple rules but hard solutions. Here it is treated as a computational problem rather than a game. Five solvers were compared on the same 75 generated puzzles: three backtracking solvers differing only in how much they reason during the search, and two local search solvers.
+Light Up, also known as Akari, is a Japanese puzzle game with simple rules but hard solutions. Here it is treated as a computational problem. Five solvers were compared on the same 75 generated puzzles: three backtracking solvers differing only in how much they reason during the search, and two local search solvers.
 
 The main result is that reasoning matters more than speed. Full constraint propagation solved every generated puzzle, and solved a published puzzle without searching at all. Simulated annealing was clearly better than hill climbing, and puzzles with fewer clues proved easier for the solvers although they are harder for people.
 
@@ -63,6 +63,7 @@ The main result is that reasoning matters more than speed. Full constraint propa
 
 \tableofcontents
 \listoffigures
+\listoftables
 \newpage
 
 \chapter{Introduction}
@@ -72,6 +73,8 @@ The main result is that reasoning matters more than speed. Full constraint propa
 Light Up is a binary determination puzzle published by \textbf{Nikoli}\cite{nikoli}, a Japanese publisher of logical games, which had released three full books of Light Up puzzles by 2011.
 
 The puzzle is also interesting as a computing problem. McPhail\cite{mcphail} proved that deciding whether a Light Up puzzle has a solution is NP-complete, by a reduction from Circuit-SAT. In the worst case the solving time therefore grows very fast as the board gets bigger, and no algorithm removes this limit. A better algorithm can only push it further away, and measuring how far each method pushes it is the goal of this project.
+
+The report continues as follows. Chapter 2 reviews earlier work and relates it to this project, Chapter 3 describes the five solvers and the experimental setup, and Chapter 4 presents the measurements, the conclusions and possible future work. All solvers, the generator and the experiment scripts were written in Python.
 
 
 
@@ -90,6 +93,8 @@ Light Up is played on a rectangular board of black and white cells; all boards u
 
 \chapter{Literature Review}
 
+Earlier work has approached Light Up with local search, with satisfiability, and as a constraint problem. Each is reviewed below.
+
 \section{Hill Climbing and Simulated Annealing}
 
 Libo Sun, James Browning and Roberto Perera \cite{light_up_ai} solved the puzzle with heuristic search. They tested \textit{Hill Climbing} and \textit{Simulated Annealing} using a fitness function that measured the percentage of lit cells and subtracted a penalty for each conflict. Bulbs are placed randomly at the start, and the available actions are adding, removing, or moving a bulb.
@@ -107,7 +112,7 @@ In his "Analysis of Akari" paper\cite{analysis_akari} Bram Pulles built a SAT so
     \label{fig:trivial}
 \end{figure}
 
-His SAT solver translates the board into a boolean formula and passes it to the Z3 theorem prover, which finishes 40 × 40 puzzles in under a second. His backtracking solver starts from the trivial solver's base solution, sorts the remaining candidates so that cells next to numbered walls come first, and backtracks early when a clue can no longer be satisfied. It is far slower, needing minutes even for a 14 × 14 board, except on nearly empty boards where Z3 slows down and the simpler solver finishes first.
+His SAT solver translates the board into a boolean formula and passes it to the Z3 theorem prover, which finishes 40 × 40 puzzles in under a second. His backtracking solver starts from the trivial solver's base solution and sorts the remaining candidates so that cells next to numbered walls come first. It is far slower, needing minutes even for a 14 × 14 board, except on nearly empty boards where Z3 slows down and the simpler solver finishes first.
 
 \section{Relation to this project}
 
@@ -135,7 +140,7 @@ Let $\text{\textbf{\textit{sight}}}(w)$ be the white cells sharing a row or colu
   \(C_3: \quad \forall\, c \in \text{Clues}: \quad \sum_{x \in N_c} b_x = n_c\)
   
 \bigskip
-Solving the problem means assigning a value from D to every variable in X so that all constraints in C hold. All three are \emph{counting} constraints, because each limits how many bulbs a region may contain. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three solvers were built on this same formulation, differing only in how much reasoning they do while branching: a naive baseline, forward checking, and full inference. Comparing them measures the effect of inference on the search.
+Solving the problem means assigning a value from D to every variable in X so that all constraints hold. All three are \emph{counting} constraints, because each limits how many bulbs a region may contain. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three solvers were built on this formulation, differing only in how much reasoning they do while branching: a naive baseline, forward checking, and full inference.
 
 \subsection{Naive Backtracking}
 
@@ -158,10 +163,8 @@ Solving the problem means assigning a value from D to every variable in X so tha
   board: the status of each white cell, a count of how many bulbs light each cell, and a
   trail so that backtracking undoes exactly what changed. When a bulb is placed both apply
   $C_1$ and mark every cell in its sight as empty. Both also use the
-  most-constrained-variable heuristic, adapted to counting constraints: first an undecided
-  neighbour of the clue with the least slack, then a cell that could light the unlit cell
-  with the fewest options left. A bulb is tried first, because it makes a wrong choice fail
-  sooner.
+  most-constrained-variable heuristic: first an undecided neighbour of the clue with the
+  least slack, then a cell that could light the unlit cell with the fewest options left.
 
   Forward checking only checks, it never assigns. Let $\text{placed}(c)$ be the number of a
   clue's neighbours holding a bulb and $\text{free}(c)$ the number still undecided. For
@@ -172,9 +175,8 @@ Solving the problem means assigning a value from D to every variable in X so tha
 
 \subsection{Backtracking with Full Inference}
 
-  Full inference keeps everything above, but replaces the prune-only lookahead with a step
-  that assigns values it can prove are forced, repeating until a full pass changes nothing.
-  Three rules drive this:
+  Full inference replaces the prune-only lookahead with a step that assigns values it can
+  prove are forced, repeating until a full pass changes nothing. Three rules drive this:
 
   \begin{align}
   \text{placed}(c) = n_c &\;\Longrightarrow\; \forall x \in \text{free}(c):\ b_x \leftarrow 0
@@ -201,12 +203,14 @@ Solving the problem means assigning a value from D to every variable in X so tha
 
 Local search was used for the second solution approach. Two solvers were implemented: hill climbing and simulated annealing. Both are incomplete algorithms that work on a complete-state formulation, evaluating whole board configurations rather than building a solution cell by cell. Both use a 3-action model, adding, removing or moving a bulb, and both precompute the board geometry so the lit cells are known after every move.
 
-Both start from an informed initialization: bulbs are placed on randomly chosen unlit cells until every white cell is lit. The board therefore begins fully lit and free of conflicts, although some clues may be violated.
+Both start from an informed initialization: bulbs are placed on randomly chosen unlit cells until every white cell is lit. An unlit cell is never in sight of a bulb already placed, so the board begins fully lit and with no two bulbs shining on each other, although some clues may still be violated.
 
 Progress is measured by a cost function that the agent minimizes. A solution has a cost of zero, and the agent is penalized for each unlit white cell, each numbered black cell with the wrong number of bulbs beside it, and each pair of bulbs shining on each other:
 
-\[\ C(s) = \sum (Unlit White Cells)+\sum_ {c  \in  Clues}| n_c - a_c| +\sum (Bulb Collisions),\]
-where for every numbered black cell \textit{c}, $n_c$ is the required number of bulbs and $a_c$ is  the actual number of adjacent bulbs. With informed initialization, search initially starts with zero bulb collisions.
+\[ C(s) = \bigl|\{w \in X : w \text{ unlit}\}\bigr|
+        \;+\; \sum_{c \in \text{Clues}} |n_c - a_c|
+        \;+\; \bigl|\{\{u,v\} : u \in \text{sight}(v),\ b_u = b_v = 1\}\bigr| \]
+where $a_c$ is the actual number of bulbs next to clue $c$. The three terms count the unlit cells, the deviation of each clue, and the pairs of bulbs that see each other.
 
 \subsection{Hill Climbing}
 
@@ -221,8 +225,7 @@ Simulated annealing sometimes accepts a move that makes the board worse, which p
 
 A generator was written to supply puzzles, building each one from a solution. It places
 walls at a chosen density, mirrored through the centre of the board, then repeatedly puts a
-bulb on a random unlit cell until the board is lit; an unlit cell is outside the sight of
-every bulb already placed, so this never creates a conflict. Each wall then gets, with some
+bulb on a random unlit cell until the board is lit. Each wall then gets, with some
 probability, the number of bulbs next to it, and the bulbs are removed. The result always
 has a solution, but not always only one, a point that returns in
 Chapter~\ref{chap:results}. Three presets control the densities: easy boards have 25\%
@@ -233,8 +236,8 @@ longer.
 Five board sizes were used ($7\times7$, $10\times10$, $14\times14$, $18\times18$ and
 $25\times25$), with the three presets and five seeded puzzles each, giving 75 puzzles.
 Every solver was given the same puzzles and five seconds per run, so the sweep contains 375
-runs. The generator depends only on the size, the preset and the seed, so any run can be
-repeated from those three values.
+runs. Because the generator depends only on the size, the preset and the seed, any run can
+be repeated from those three values.
 
 Each run records whether it succeeded, the time taken, the search nodes (or states checked),
 the conflicts, the propagations, and for local search the lowest cost reached. Success is
@@ -245,13 +248,14 @@ several valid solutions.
 \chapter{Evaluation}
 \label{chap:results}
 
-\section{Results}
+\section{Solver comparison}
 
-Table~\ref{tab:solvesize} shows how many puzzles each solver finished inside the budget.
-Full inference solved every generated puzzle, and forward checking failed only on the
-largest boards. The naive solver started at 15 out of 15 on $7\times7$ boards and solved
-nothing on $25\times25$. Simulated annealing reached the same total as the naive solver,
-while hill climbing solved about a quarter of the set.
+Using the setup of Section~\ref{sec:setup}, Table~\ref{tab:solvesize} shows how many
+puzzles each solver finished inside the budget. Full inference solved every generated
+puzzle, and forward checking failed only on the largest boards. The naive solver started at
+15 out of 15 on $7\times7$ boards and solved nothing on $25\times25$. Simulated annealing
+reached the same total as the naive solver, while hill climbing solved about a quarter of
+the set.
 
 \begin{table}[H]
   \centering
@@ -283,8 +287,8 @@ Pulles~\cite{analysis_akari}. The naive solver needs 308 search nodes and forwar
 needs 12, while full inference needs none: 41 propagation steps give the whole solution
 without a single branching decision. This fits how such puzzles are made, because they are
 designed to be solved step by step and the propagation rules do the same steps. Only 3 of
-the 15 generated boards at $7\times7$ behaved this way, probably because the generator
-guarantees a solution but not a single one.
+the 15 generated boards at $7\times7$ behaved this way, probably because the generator does
+not guarantee a single solution.
 
 \begin{figure}[H]
     \centering
@@ -334,8 +338,8 @@ Perera~\cite{light_up_ai} on different puzzles and with a separate implementatio
 How each solver fails is as interesting as the counts. Because the cost function reports
 the violations left, a failed run still shows how close it came: hill climbing ended its
 failed runs with 13 violations on average, simulated annealing with 5.5. In one
-twenty-second run, hill climbing restarted 12{,}496 times and never removed the last
-violation, because every available move made the board worse.
+twenty-second run it restarted 12{,}496 times and never removed the last violation, because
+every available move made the board worse.
 
 \begin{figure}[H]
     \centering
@@ -345,17 +349,17 @@ violation, because every available move made the board worse.
     \label{fig:paradigms}
 \end{figure}
 
-Two limitations of local search should be stated clearly. Neither solver can prove that a
-board has no solution, and within this budget complete search with inference was better
-than both at every size tested.
+Neither local search solver can prove that a board has no solution, and within this budget
+complete search with inference was better than both at every size tested.
 
 \subsection{What makes an instance hard}
 
 Denser boards were expected to be easier for every solver, but Figure~\ref{fig:difficulty}
-shows the opposite for local search. At $10\times10$ hill climbing solved nothing on easy
-or medium boards and all five hard ones. Simulated annealing behaves the same way, solving
-19 of 25 hard puzzles but only 13 easy ones, while forward checking prefers the opposite,
-solving all 25 easy puzzles and 22 hard ones.
+shows the opposite for local search: at $14\times14$ hill climbing solved none of the easy
+or medium puzzles, yet solved some hard ones, and at $10\times10$ it solved all five hard
+boards and nothing else. Simulated annealing behaves the same way, solving 19 of 25 hard
+puzzles but only 13 easy ones, while forward checking prefers the opposite, solving all 25
+easy puzzles and 22 hard ones.
 
 \begin{figure}[H]
     \centering
@@ -369,9 +373,9 @@ solving all 25 easy puzzles and 22 hard ones.
 The reason is that a clue means different things to different solvers. For a solver that
 reasons about constraints, a clue is information, so more clues make the board easier. For
 a local search solver, which can only score a complete board, each clue is one more penalty
-term, so dense boards have more local optima. This is not caused by problem size, which
-moves the other way: at $14\times14$ the hard preset leaves about 172 white cells against
-146 for easy. The presets predict how hard a puzzle is for a person, not for a solver.
+term, so dense boards have more local optima. Problem size moves the other way: at
+$14\times14$ the hard preset leaves about 172 white cells against 146 for easy. The presets
+predict how hard a puzzle is for a person, not for a solver.
 
 \subsection{Sensitivity to the time budget}
 
@@ -393,8 +397,8 @@ More time helps a solver that is only slow, not one that is stuck.
 Three points limit these numbers. Only five puzzles were used per combination, so one
 puzzle changes a single cell of Table~\ref{tab:solvesize} by twenty points. All medians use
 solved runs only: the naive solver's median node count drops between $14\times14$ and
-$18\times18$ not because it improved, but because only the easiest puzzles of the larger
-size entered the median. Finally, all times come from one machine, so the comparison is
+$18\times18$ only because the harder puzzles at the larger size were never solved and so
+never entered the median. Finally, all times come from one machine, so the comparison is
 valid but the milliseconds are not.
 
 \section{Conclusion}
@@ -407,11 +411,10 @@ large it is.
 
 Three results were not expected. Fewer search nodes do not always mean less time, because
 propagation is paid for at every node and only pays back when there is something to work
-out. The way hill climbing failed shows the local optimum problem clearly. Most surprising
-of all, sparse boards were easier for the solvers than dense ones, so the presets describe
-human rather than search difficulty. Doubling the time budget changed almost nothing, which
-shows that these differences come from how the solvers are built, not from how long they
-ran.
+out. Sparse boards were easier for the solvers than dense ones, so the presets describe
+human rather than search difficulty. And doubling the time budget changed almost nothing,
+which shows that these differences come from how the solvers are built, not from how long
+they ran.
 
 \section{Possible Future work}
 
