@@ -52,9 +52,9 @@
 
 Light Up, also known as Akari, is a Japanese puzzle game. Its rules are simple, but its solutions are hard to find. The player places light bulbs on a grid of black and white cells until every white cell is lit, while following a small set of rules. This makes it a useful problem for comparing different algorithms.
 
-In this project we treat Light Up as a computational problem rather than as a game. We implemented five solvers and compared them under the same conditions. Three of them are backtracking solvers that differ only in how much reasoning they do during the search. The other two are local search solvers, hill climbing and simulated annealing. We tested all five on the same 75 generated puzzles.
+In this project Light Up is treated as a computational problem rather than as a game. Five solvers were implemented and compared under the same conditions. Three of them are backtracking solvers that differ only in how much reasoning is done during the search. The other two are local search solvers, hill climbing and simulated annealing. All five were tested on the same 75 generated puzzles.
 
-Our main result is that reasoning matters more than speed. The solver with full constraint propagation solved every puzzle we generated, and it solved a published puzzle without searching at all. Simulated annealing clearly performed better than hill climbing, which confirms earlier work. We also found that puzzles with fewer clues were easier for our solvers, even though they are harder for people.
+The main result is that reasoning matters more than speed. The solver with full constraint propagation solved every generated puzzle, and it solved a published puzzle without searching at all. Simulated annealing was clearly better than hill climbing, which confirms earlier work. Puzzles with fewer clues also turned out to be easier for the solvers, even though they are harder for people.
 
 
 \vspace{2mm}
@@ -73,7 +73,7 @@ Our main result is that reasoning matters more than speed. The solver with full 
 
 Light Up is a binary determination puzzle published by \textbf{Nikoli}\cite{nikoli}, which is a Japanese publisher focused on logical games and puzzles. As of 2011, three full books consisting of only Light Up puzzles have been published by this publisher.
 
-The puzzle is also interesting from a computational point of view. McPhail\cite{mcphail} proved that deciding whether a Light Up puzzle has a solution is NP-complete, using a reduction from Circuit-SAT. This means that in the worst case the solving time grows exponentially with the board size. No algorithm can remove this limit. A better algorithm can only push it further away, and measuring how far each method pushes it is the goal of this project.
+The puzzle is also interesting as a computing problem. McPhail\cite{mcphail} proved that deciding whether a Light Up puzzle has a solution is NP-complete, using a reduction from Circuit-SAT. This means that in the worst case the solving time grows very fast as the board gets bigger. No algorithm can remove this limit. A better algorithm can only push it further away. Measuring how far each method pushes it is the goal of this project.
 
 
 
@@ -130,13 +130,13 @@ The author also implemented a backtracking solver based on depth-first search. I
 
 The two approaches differ greatly in speed. The SAT solver is much faster on normal puzzles, because Z3 is a highly optimized library, while the backtracking solver can need minutes even for a 14 × 14 board. There is one exception. On nearly empty boards with very few walls the SAT solver becomes slow, and the simpler backtracking solver finishes first.
 
-\section{Relation to our work}
+\section{Relation to this project}
 
-Light Up has also been studied as a constraint problem. Çelik et al.\cite{celik2009} model Akari and three other grid puzzles in both Answer Set Programming and Constraint Programming, and compare the two formalisms on representation and on running time. Their goal is to compare two declarative languages. Our goal is different: we want to measure how a search procedure behaves.
+Light Up has also been studied as a constraint problem. Çelik et al.\cite{celik2009} model Akari and three other grid puzzles in both Answer Set Programming and Constraint Programming, and compare the two on how the problem is written and on running time. Their goal is to compare two declarative languages. The goal here is different: to measure how a search procedure behaves.
 
-These works shaped our own design in three ways. First, Pulles is the closest earlier work to ours, even though he does not use the vocabulary of constraint satisfaction. His trivial solver is constraint propagation. His ordering of candidate cells, which puts cells next to numbered walls first, is a variable-ordering heuristic. His check for a clue that can no longer be satisfied is the same test our forward-checking solver uses. The difference is that his inference runs only once, before the search. We state the puzzle as a CSP and run that inference inside the search, at every node, until nothing changes. We then measure how much this helps.
+These works shaped the design of this project in three ways. First, Pulles is the closest earlier work, even though he does not use the words of constraint satisfaction. His trivial solver is constraint propagation. His ordering of candidate cells, which puts cells next to numbered walls first, is a variable-ordering heuristic. His check for a clue that can no longer be satisfied is the same test used by the forward-checking solver here. The difference is that his inference runs only once, before the search starts. In this project the puzzle is written as a CSP, and the same inference is run inside the search, at every node, until nothing changes. The effect of this change is then measured.
 
-Second, Pulles uses the Z3 library for the search itself, so his results mostly describe Z3. We implement every solver ourselves, which is what makes a comparison of search behaviour meaningful. Third, we reimplement the hill climbing and simulated annealing of Sun et al., so that we can test their reported ordering on puzzles other than their own.
+Second, Pulles uses the Z3 library for the search itself, so his results mostly describe Z3. Here every solver was written from scratch, which is what makes a comparison of search behaviour useful. Third, the hill climbing and simulated annealing of Sun et al.\ were reimplemented, so that the order they report between the two could be tested on different puzzles.
 
 
 \chapter{Solution approaches}
@@ -177,7 +177,7 @@ Using this notation, the three constraints can be written formally as:
   \(C_3: \quad \forall\, c \in \text{Clues}: \quad \sum_{x \in N_c} b_x = n_c\)
   
 \bigskip
-Solving the problem means finding an assignment of values from D to every variable in X that satisfies all the constraints in C. The three constraint families are all \emph{counting} constraints, in that each bounds how many bulbs a region may contain: at least one over a cell's line of sight, at most one over a wall-free segment, and exactly $n_c$ over a clue's neighbours. The standard techniques we apply to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three backtracking approaches are implemented, all are formed based on the same problem formulation, but differ in how much reasoning they do before and during branching: a naive baseline, backtracking with forward checking, and a full inference. Comparing these three approaches would mean measuring the effect of inference on the search process.
+Solving the problem means finding an assignment of values from D to every variable in X that satisfies all the constraints in C. All three constraints are \emph{counting} constraints, because each one limits how many bulbs a region may contain: at least one in a cell's line of sight, at most one in a wall-free segment, and exactly $n_c$ next to a clue. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three backtracking approaches are implemented, all are formed based on the same problem formulation, but differ in how much reasoning they do before and during branching: a naive baseline, backtracking with forward checking, and a full inference. Comparing these three approaches would mean measuring the effect of inference on the search process.
 
 \subsection{Naive Backtracking}
 
@@ -193,8 +193,8 @@ Solving the problem means finding an assignment of values from D to every variab
   from scratch every time: it checks the current assignment against $C_1$ and $C_3$, and
   recomputes the set of lit cells from the beginning.
 
-  One extra rule is needed to make this solver usable, which we call the
-  \emph{doomed-cell} rule. If a white cell $w$ is not lit, and $w$ and every cell in
+  One extra rule is needed to make this solver usable. It is called the
+  \emph{doomed-cell} rule here. If a white cell $w$ is not lit, and $w$ and every cell in
   $\text{sight}(w)$ have already been decided empty, then $w$ can never be lit. $C_2$ can
   no longer be satisfied, so the branch is abandoned at once. Without this rule the
   solver would still be correct, because every complete assignment is tested at the end,
@@ -241,7 +241,7 @@ Solving the problem means finding an assignment of values from D to every variab
   clue $c$. The second applies to $C_2$. If an unlit cell is already decided empty and no
   undecided cell remains in its line of sight, it can never be lit, so the branch fails
   immediately. Neither condition assigns a value. They only decide whether the branch is
-  still alive, which is why we call this pruning rather than inference.
+  still alive, so this is called pruning rather than inference.
 
 
 \subsection{Backtracking with Full Inference}
@@ -271,8 +271,8 @@ Solving the problem means finding an assignment of values from D to every variab
   until a full pass changes nothing.
 
   Because this solver assigns values instead of only pruning, a large part of each puzzle
-  is solved by logic rather than by branching. We count these assignments separately as
-  propagations, and compare them with search nodes in Chapter~\ref{chap:results}. The same
+  is solved by logic rather than by branching. These assignments are counted separately as
+  propagations, and compared with search nodes in Chapter~\ref{chap:results}. The same
   step also runs once before the first branching decision. This means that the direct
   consequences of the starting clues, such as a clue of 0 forcing all its neighbours to be
   empty, are found before the search begins.
@@ -304,37 +304,37 @@ The simulated annealing solver improves Hill Climbing by allowing the agent to o
 \section{Experimental setup}
 \label{sec:setup}
 
-To compare five solvers we need many puzzles, so we wrote a generator. It builds each
+Comparing five solvers needs many puzzles, so a generator was written. It builds each
 puzzle starting from a solution. First it places walls at a chosen density and mirrors
 them through the centre of the board, because published puzzles usually look symmetric.
 Then it builds a valid bulb placement: it repeatedly picks a random cell that is still
 unlit and puts a bulb there. An unlit cell is outside the line of sight of every bulb
 already placed, so this step can never create a conflict, and it stops when the whole
-board is lit. Each wall then receives, with some probability, the number of bulbs next to
-it in this placement. Finally the bulbs are removed. The result is a puzzle that is
-solvable by construction, because the placement we started from is a solution. It is not
-always the only solution, and we return to this in Chapter~\ref{chap:results}.
+board is lit. Each wall then gets, with some probability, the number of bulbs next to it
+in this placement. Finally the bulbs are removed. The result always has a solution,
+because the placement it was built from is one. It is not always the only solution, and
+this point comes back in Chapter~\ref{chap:results}.
 
 Three presets control the densities. Easy boards have 25\% walls and a number on every
 wall. Medium boards have 18\% walls and numbers on 80\% of them. Hard boards have 12\%
 walls and numbers on 55\% of them. The names describe the effort a person needs, because
-fewer clues make the chain of deductions longer.
+fewer clues make the chain of steps longer.
 
-We used five board sizes ($7\times7$, $10\times10$, $14\times14$, $18\times18$ and
-$25\times25$) and the three presets, with five seeded puzzles in each combination. This
-gives 75 different puzzles. Every solver received exactly the same 75 puzzles, and every
-run was given five seconds, so the sweep contains 375 runs. The generator depends only on
-the board size, the preset and the seed, and the two random solvers use the same seed, so
-any run can be reproduced from those three values alone. The puzzles themselves do not
-need to be stored.
+Five board sizes were used ($7\times7$, $10\times10$, $14\times14$, $18\times18$ and
+$25\times25$), together with the three presets and five seeded puzzles in each
+combination. This gives 75 different puzzles. Every solver was given exactly the same 75
+puzzles, and every run was given five seconds, so the sweep contains 375 runs. The
+generator depends only on the board size, the preset and the seed, and the two random
+solvers use the same seed. Any run can therefore be repeated from those three values, and
+the puzzles do not need to be stored.
 
-For every run we record whether it succeeded, the time taken, the number of search nodes
-(or, for local search, the number of states evaluated), the number of conflicts, and the
-number of assignments made by propagation. Local search runs also record the lowest cost
-reached, which shows how close a failed run came to a solution. A run counts as successful
-only if the validator confirms that the returned placement satisfies $C_1$, $C_2$ and
-$C_3$. We do not compare the result with a stored answer, because a puzzle can have
-several valid solutions and any of them is correct.
+Each run records whether it succeeded, the time taken, the number of search nodes (or, for
+local search, the number of states checked), the number of conflicts, and the number of
+assignments made by propagation. Local search runs also record the lowest cost reached,
+which shows how close a failed run came to a solution. A run counts as successful only if
+the validator confirms that the returned placement satisfies $C_1$, $C_2$ and $C_3$. The
+result is not compared with a stored answer, because a puzzle can have several valid
+solutions and any of them is correct.
 
 
 \chapter{Evaluation}
@@ -343,10 +343,10 @@ several valid solutions and any of them is correct.
 \section{Results}
 
 Table~\ref{tab:solvesize} shows how many puzzles each solver finished inside the budget,
-by board size. The order is clear. Full inference solved every puzzle we generated.
-Forward checking failed only on the largest boards. The naive solver started at 15 out of
-15 on $7\times7$ boards and solved nothing at all on $25\times25$ boards. Among the local
-search solvers, simulated annealing reached the same total as the naive solver, while hill
+by board size. The order is clear. Full inference solved every generated puzzle. Forward
+checking failed only on the largest boards. The naive solver started at 15 out of 15 on
+$7\times7$ boards and solved nothing at all on $25\times25$ boards. Among the local search
+solvers, simulated annealing reached the same total as the naive solver, while hill
 climbing solved only about a quarter of the set.
 
 \begin{table}[H]
@@ -379,13 +379,13 @@ The clearest single result comes from the published $7\times7$ puzzle of
 Pulles~\cite{analysis_akari}. The naive solver needs 308 search nodes to solve it and
 forward checking needs 12. Full inference needs none at all: 41 propagation steps produce
 the whole solution without a single branching decision. This fits the way such puzzles are
-made, because a published puzzle is designed so that a person can solve it by deduction,
-and our propagation rules perform the same deductions automatically.
+made, because a published puzzle is designed so that a person can solve it step by step,
+and the propagation rules do the same steps automatically.
 
-This effect is much rarer on our own puzzles. Only 3 of the 15 boards at $7\times7$ and
-none above $14\times14$ were solved without any search. A likely reason is that our
-generator guarantees a solution but not a unique one. Its boards are therefore less
-constrained, and less can be deduced from them.
+This effect is much rarer on the generated puzzles. Only 3 of the 15 boards at $7\times7$,
+and none above $14\times14$, were solved without any search. A likely reason is that the
+generator only guarantees a solution, not a single solution. Its boards have fewer
+constraints, so less can be worked out from them.
 
 \begin{figure}[H]
     \centering
@@ -433,9 +433,9 @@ that never ran out of time.
 Figure~\ref{fig:paradigms} compares all five solvers on hard boards. Simulated annealing
 was better than hill climbing at every size. It solved 19 of the 25 hard puzzles against
 11, and 45 of all 75 against 21. This repeats the main result of Sun, Browning and
-Perera~\cite{light_up_ai} on our own puzzles and with our own implementation.
+Perera~\cite{light_up_ai} on different puzzles and with a separate implementation.
 
-The way each solver fails is as interesting as the counts. Our cost function reports how
+The way each solver fails is as interesting as the counts. The cost function reports how
 many violations remain, so a failed run still shows how close it came. Hill climbing
 finished its failed runs with 13 violations left on average, and simulated annealing with
 only 5.5. In one twenty-second run on a hard $14\times14$ board, hill climbing restarted
@@ -454,12 +454,12 @@ accepts a worse state.
 
 Two limitations of local search should be stated clearly. Neither solver can prove that a
 board has no solution, because both can only report that they did not find one. And within
-our budget, complete search with inference was better than both of them at every size we
+this budget, complete search with inference was better than both of them at every size
 tested.
 
 \subsection{What makes an instance hard}
 
-Our presets change the density of walls and clues, and we expected denser boards to be
+The presets change the density of walls and clues, and denser boards were expected to be
 easier for every solver. Figure~\ref{fig:difficulty} shows that this is not what happened.
 At $14\times14$ hill climbing solved none of the easy or medium puzzles, but it solved
 some of the hard ones. At $10\times10$ the pattern is even stronger: nothing on easy or
@@ -483,20 +483,20 @@ solver, which can only score a complete board, each clue is one more penalty ter
 cost function. Dense boards therefore have more local optima and are harder.
 
 This is not caused by problem size, because the size moves the other way: at $14\times14$
-our hard preset leaves about 172 white cells, while the easy preset leaves about 146. Our
-presets predict how hard a puzzle is for a person, which depends on the length of the
-deduction chain. They do not predict how hard it is for a solver.
+the hard preset leaves about 172 white cells, while the easy preset leaves about 146. The
+presets predict how hard a puzzle is for a person, which depends on how long the chain of
+steps is. They do not predict how hard it is for a solver.
 
 \subsection{Sensitivity to the time budget}
 
-A five-second budget is an arbitrary choice, so we repeated the whole sweep with ten
-seconds on exactly the same puzzles. Almost nothing changed. The naive solver gained three
-puzzles, forward checking and simulated annealing gained two each, full inference gained
-none because it already solved everything, and hill climbing gained none at all
+A five-second budget is a free choice, so the whole sweep was repeated with ten seconds on
+exactly the same puzzles. Almost nothing changed. The naive solver gained three puzzles,
+forward checking and simulated annealing gained two each, full inference gained none
+because it already solved everything, and hill climbing gained none at all
 (Figure~\ref{fig:budget}). No puzzle was lost, which also confirms that the runs are
 properly seeded and repeatable. More time helps a solver that is only slow, and does not
-help a solver that is stuck. The differences reported above therefore come from the design
-of the solvers, not from the budget we chose.
+help a solver that is stuck. The differences above therefore come from the design of the
+solvers, not from the chosen budget.
 
 \begin{figure}[H]
     \centering
@@ -508,56 +508,57 @@ of the solvers, not from the budget we chose.
 
 \subsection{Limitations}
 
-Three points limit the numbers above. First, we used five puzzles per combination of size
-and difficulty. This is enough for the totals, but one puzzle changes a single cell of
-Table~\ref{tab:solvesize} by twenty points, so the individual cells should be read as
-indications only.
+Three points limit the numbers above. First, only five puzzles were used per combination
+of size and difficulty. This is enough for the totals, but one puzzle changes a single
+cell of Table~\ref{tab:solvesize} by twenty points, so the single cells should be read as
+a rough guide only.
 
-Second, all medians use solved runs only. This creates a survivor effect. The median node
-count of the naive solver falls between $14\times14$ and $18\times18$, but not because the
-solver improved. Only the easiest puzzles of the larger size were solved, and only those
-entered the median. Solve rate and search effort must therefore always be read together.
+Second, all medians use solved runs only. This hides the failed runs. The median node
+count of the naive solver drops between $14\times14$ and $18\times18$, but not because the
+solver got better. Only the easiest puzzles of the larger size were solved, and only those
+went into the median. Solve rate and search effort must therefore always be read together.
 
 Third, all times were measured on one machine running CPython. The comparison between
-solvers is meaningful, but the absolute values in milliseconds are not.
+solvers is still valid, but the times in milliseconds are not.
 
 \section{Conclusion}
 
-We compared five ways of solving the same problem under the same conditions, and the
+Five ways of solving the same problem were compared under the same conditions, and the
 comparison gave a clear order. Inference was the most important factor. Adding propagation
 to backtracking changed a solver that failed on most large boards into one that solved
-every puzzle we generated, and on a published puzzle it removed the need to search at all.
+every generated puzzle, and on a published puzzle it removed the need to search at all.
 The gain grows with the board size, so inference changes how fast the cost grows and not
 only how large it is.
 
-We also found three results that we did not expect. Fewer search nodes do not always mean
-less time, because propagation must be paid for at every node and only pays back when the
-board has enough clues. Simulated annealing was much better than hill climbing, which
-confirms earlier work, and the way hill climbing failed shows the local optimum problem
-very clearly: it stopped one violation away from a solution and stayed there through
-twelve thousand restarts. Most surprisingly, sparse boards were easier for our solvers
-than dense ones, which shows that our density presets describe human difficulty and not
-search difficulty.
+Three results were not expected. Fewer search nodes do not always mean less time, because
+propagation must be paid for at every node and only pays back when there is something to
+work out. Simulated annealing was much better than hill climbing, which confirms earlier
+work, and the way hill climbing failed shows the local optimum problem very clearly: it
+stopped one violation away from a solution and stayed there through twelve thousand
+restarts. Most surprising of all, sparse boards were easier for the solvers than dense
+ones, which shows that the density presets describe human difficulty and not search
+difficulty.
 
-Finally, doubling the time budget changed almost nothing. This is the result that gives us
-the most confidence in the others, because it shows that the differences we measured come
-from how the solvers are built and not from how long they were allowed to run.
+Finally, doubling the time budget changed almost nothing. This result gives the most
+confidence in the others, because it shows that the differences come from how the solvers
+are built and not from how long they were allowed to run.
 
 \section{Possible Future work}
 
-Three directions follow from the limitations above. First, our generator guarantees that a
-puzzle has a solution but not that the solution is unique. Adding the uniqueness check
-described by Pulles~\cite{analysis_akari} would let us test our idea that uniquely
-solvable boards allow much more deduction.
+Three directions follow from the limitations above. First, the generator guarantees that a
+puzzle has a solution, but not that the solution is the only one. Adding the uniqueness
+check described by Pulles~\cite{analysis_akari} would test the idea that boards with a
+single solution allow much more to be worked out.
 
-Second, the puzzle could be solved as a satisfiability problem. Our propagation rules are
-already a form of unit propagation, so writing our own CNF encoding and our own DPLL
-solver would let us compare a clause-based formulation with our constraint-based one. We
-would write the solver ourselves rather than use an external library, as earlier work did.
+Second, the puzzle could be solved as a satisfiability problem. The propagation rules used
+here are already a form of unit propagation, so writing a CNF encoding and a DPLL solver
+would allow a clause-based version to be compared with the constraint-based one. The
+solver would be written from scratch rather than taken from a library, as earlier work
+did.
 
-Third, our presets describe human difficulty rather than search difficulty. They could be
-recalibrated using the search effort we measured, which would also give a controlled way
-to generate puzzles of a chosen hardness.
+Third, the presets describe human difficulty rather than search difficulty. They could be
+set again using the search effort measured here, which would also give a controlled way to
+produce puzzles of a chosen hardness.
 
 
 \begin{thebibliography}{9}
