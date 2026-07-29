@@ -48,25 +48,31 @@ One detail worth remembering: nothing in the rules says a puzzle has only one so
 
 ## Slide 5 — One problem, five solvers  (~1 min)
 
-**Say:** We implemented five solvers in two families. On the left, complete search. Plain backtracking is the baseline — it re-checks the whole board at every step. Forward checking adds memory: placing a bulb immediately rules out every cell it sees. Full inference adds deduction, applied over and over: a satisfied clue blocks its remaining neighbors, a clue that needs all its remaining cells forces them, and a cell with only one possible light source left forces that source. Those are exactly the moves a human player makes. On the right, local search: hill climbing and simulated annealing start from a complete random placement and repair it, guided by a score that counts rule violations — zero violations means solved. Every solver reports the same statistics, so the comparison is fair.
+**Say:** We implemented five solvers in two families. 
+On the left, backtracking search - it builds a partial assignment, one cell at a time, and backtracks it when stuck. All three are complete. They differ only in how much inference they do.
+Plain backtracking does none. Forward checking deletes values: place a bulb, and every cell it sees loses the option of being a bulb. Full inference keeps applying the constraints until nothing changes - a clue that already has all its bulbs empties the rest, a clue that needs every cell it has left fills them, a cell with one possible light source forces that source. These are the moves a human player makes.
+On the right, local search. Both start from a random fully lit board and repair it, guided by a score that counts broken rules - zero means solved. Both are incomplete. The difference is which moves they accept. Hill climbing takes only improvements, so it stalls at a local optimum and restarts. Simulated annealing sometimes accepts a worse board, less and less over time.
 
 > Cue: This slide is the experiment design in one picture.
 
 ## Slide 6 — The system: game, generator, observable solvers  (~45 s)
 
-**Say:** Everything is observable. This is our game — you can play it yourself, including the X marks human players use for notes. The same window animates any solver: in this screenshot the naive solver is mid-search on a ten-by-ten — the red frame is a conflict it just hit, and the status bar shows it has already tried eighty-eight thousand nodes. This replay tool is how we debugged the solvers, and honestly, how we came to understand them.
+**Say:** Everything is observable. This is our game - you can play it yourself. The window animates all solvers: in this screenshot the naive solver is mid-search on a ten-by-ten - the red frame is a conflict it just hit, and the status bar shows it has already tried eighty-eight thousand nodes. This replay tool is how we debugged the solvers, and honestly, how we came to understand them.
 
 > Cue: If Q&A time allows, a 20-second live solve beats this slide — have the game open in a background window. Never show code.
 
 ## Slide 7 — Experimental setup  (~45 s)
 
-**Say:** The experiment: five board sizes from seven to twenty-five, three difficulty presets from clue-dense to sparse, five seeded instances per combination — seventy-five unique puzzles — and every solver gets identical puzzles with a five-second budget: three hundred seventy-five runs. Everything is seeded, so every number that follows is reproducible. And one principle: we judge correctness by the rules themselves, never by comparing to a stored answer, because a board can have several legal solutions.
+**Say:** The experiment: five board sizes from seven to twenty-five, three difficulty presets from clue-dense to sparse, five seeded instances per combination - seventy-five unique puzzles - and every solver gets identical puzzles with a five-second budget: three hundred seventy-five runs. And one principle: we judge correctness by the rules themselves, never by comparing to a stored answer, because a board can have several legal solutions.
 
-## Slide 8 — Results — what does inference buy?  (~1.5 min)
+## Slide 8 — Results — what does inference buy?  (~1 min)
 
-**Say:** So, what does inference buy? Two headline numbers. On the published seven-by-seven, the naive solver needs three hundred and eight search nodes. Forward checking needs twelve. Full inference needs zero — the puzzle is solved entirely by deduction, no search at all. And that makes sense: publishers design puzzles that humans can deduce. Across the whole sweep, full inference solved all seventy-five instances — the only solver with a perfect record. The charts show the scaling: the naive curve leaves the picture after eighteen-by-eighteen — it solves nothing at twenty-five — while both smart variants stay one to two orders of magnitude lower. One honest nuance: full inference always expands about half the nodes of forward checking, but that only saves time when there is something to deduce. On clue-dense boards it is up to thirty-five times faster; on the sparse boards in this chart, forward checking wins, because propagation is an investment paid at every node.
+**Say:** What does inference buy? On the published seven-by-seven, full inference places every bulb by deduction - no search at all, where the naive solver needs hundreds of guesses. Publishers design puzzles humans can reason through, and our rules are those same steps.
+Full inference solved everything we generated - the only solver with a perfect record.
+The chart shows the baseline giving up: naive leaves the picture after eighteen-by-eighteen, while both informed variants stay far lower - about ten times fewer nodes at seven-by-seven, and about fifty times fewer by eighteen.
+One nuance. Full inference always expands fewer nodes, but propagation is not free - it re-checks every clue at every node, even when nothing new comes out. On clue-rich boards that pays back. On the sparse boards plotted here it does not, and forward checking wins.
 
-> Cue: THE core slide. Say 308 -> 12 -> 0 slowly. If asked why fig 1 favours fc: it plots hard instances only.
+> Cue: THE core slide. Say ZERO slowly and let it land. Q&A backup - the exact numbers on that puzzle are 308 naive, 12 forward checking, 0 full; the chart is a median over five GENERATED hard boards, where naive is 94.
 
 ## Slide 9 — Results — complete vs. local search  (~1.5 min)
 
