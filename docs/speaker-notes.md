@@ -18,7 +18,7 @@
 Swap freely — just keep the three shares roughly equal (equal input is
 graded) and hand over cleanly between slides 4→5 and 8→9.
 
-## Slide 1 — Lighting Up Akari with AI Search  (~30 s)
+## Slide 1 — Light Up Akari with AI Search  (~30 s)
 
 **Say:** Good morning. Our project is LightUp — also known as Akari — a Japanese logic puzzle. We built the game itself, and then made five different AI solvers compete on it. The board you see here is a published puzzle, solved by our own system. Let me start with the rules.
 
