@@ -25,7 +25,7 @@ from pathlib import Path
 from . import parser as puzzle_parser
 from .board import lit_cells
 from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
-from .solvers import SOLVERS
+from .solvers import LOCAL_SEARCH, SOLVERS
 from .validator import check_solution, involved_cells
 
 SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
@@ -424,7 +424,9 @@ class PlayApp:
                 del events[i + 1:]
                 break
         self.replay = {"events": events, "pos": 0, "bulbs": set(),
-                       "seen_conflicts": 0, "result": holder["result"]}
+                       "seen_conflicts": 0, "moves": 0,
+                       "local": self.solver_var.get() in LOCAL_SEARCH,
+                       "result": holder["result"]}
         self.playing = False
         if self._on_ready is not None:
             action, self._on_ready = self._on_ready, None
@@ -446,8 +448,10 @@ class PlayApp:
             n -= 1
             if ev == "place":
                 rp["bulbs"].add(cell)
+                rp["moves"] += 1
             elif ev == "remove":
                 rp["bulbs"].discard(cell)
+                rp["moves"] += 1
             elif ev == "conflict":
                 conflicts.add(cell)   # flashes red for this frame
                 rp["seen_conflicts"] += 1
@@ -469,9 +473,12 @@ class PlayApp:
         # rp["result"].stats holds the FINISHED solve's totals — the solver
         # ran to completion in the background before the animation started —
         # so showing them here would give the answer away on frame one.
+        # Local search never emits a "conflict" event — it accepts moves and
+        # measures a cost — so a conflict counter there could only read zero.
+        counter = (f"moves={rp['moves']}" if rp["local"]
+                   else f"conflicts so far={rp['seen_conflicts']}")
         progress = (f"solver: event {rp['pos']}/{len(rp['events'])}"
-                    f"   bulbs={len(rp['bulbs'])}"
-                    f"   conflicts so far={rp['seen_conflicts']}"
+                    f"   bulbs={len(rp['bulbs'])}   {counter}"
                     f"   [{last}]")
         totals = (f"nodes={stats.nodes}  conflicts={stats.conflicts}  "
                   f"backtracks={stats.backtracks}  "
@@ -498,6 +505,7 @@ class PlayApp:
         self.replay["pos"] = 0
         self.replay["bulbs"] = set()
         self.replay["seen_conflicts"] = 0
+        self.replay["moves"] = 0
 
     def toggle_play(self):
         if self.solving:
