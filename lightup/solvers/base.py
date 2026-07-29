@@ -11,6 +11,9 @@ as observer(event, cell, bulbs) on every interesting step:
     "skip"      the solver decided `cell` stays empty
     "remove"    the bulb on `cell` was taken back (backtracking)
     "conflict"  the last decision broke a rule; the branch is abandoned
+    "restart"   local search abandoned the current state for a fresh random
+                one — a hill-climbing restart or an annealing reheat
+                (cell is None); the bulb diff follows as place/remove events
     "solution"  a complete valid solution was found (cell is None)
 
 `bulbs` is the solver's live working set — read it, never mutate it.  This
