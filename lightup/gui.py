@@ -454,6 +454,13 @@ class PlayApp:
                 solved_now = True
             last = ev if cell is None else f"{ev} {cell}"
 
+        # A frame replays a BATCH of events, so the batch that carries the
+        # solution usually also carries the last conflicts of the search.
+        # Those cells are no longer in conflict on the solved board — drawing
+        # them red would contradict the verdict.
+        if solved_now:
+            conflicts.clear()
+
         self.view.show_state(rp["bulbs"], conflicts, solved_now)
 
         result, stats = rp["result"], rp["result"].stats
