@@ -50,7 +50,7 @@
 \end{center}
 \vspace{5mm}
 
-Light Up, also known as Akari, is a Japanese puzzle game with simple rules but hard solutions. Here it is treated as a computational problem. Five solvers were compared on the same 75 generated puzzles: three backtracking solvers differing only in how much they reason during the search, and two local search solvers.
+Light Up, also known as Akari, is a Japanese puzzle game with simple rules but hard solutions. Here it is treated as a computational problem. Five solvers were compared on the same 75 generated puzzles: three backtracking solvers differing in how much they reason during the search, and two local search solvers.
 
 The main result is that reasoning matters more than speed. Full constraint propagation solved every generated puzzle, and solved a published puzzle without searching at all. Simulated annealing was clearly better than hill climbing, and puzzles with fewer clues proved easier for the solvers although they are harder for people. Difficulty for a person and difficulty for a solver are therefore not the same thing.
 
@@ -114,7 +114,7 @@ In his "Analysis of Akari" paper\cite{analysis_akari} Bram Pulles built a SAT so
 
 His SAT solver translates the board into a boolean formula and passes it to the Z3 theorem prover, which finishes $40\times40$ puzzles in under a second. His backtracking solver starts from the trivial solver's base solution and sorts the remaining candidates so that cells next to numbered walls come first. It is far slower, needing minutes even for a $14\times14$ board, except on nearly empty boards where Z3 slows down and the simpler solver finishes first.
 
-\section{Relation to this project}
+\section{Constraint models, and relation to this project}
 
 Light Up has also been studied as a constraint problem. Çelik et al.\cite{celik2009} model Akari and three other grid puzzles in both Answer Set Programming and Constraint Programming, comparing the two on how the problem is written and on running time. Their goal is to compare two declarative languages, while the goal here is to measure how a search procedure behaves.
 
@@ -124,7 +124,6 @@ Pulles is the closest earlier work, even though he does not use the words of con
 \chapter{Solution approaches}
 
 \section{CSP}
-\label{sec:csp}
 The first approach is to formulate Light Up as a Constraint Satisfaction Problem (CSP), defined by variables X, a domain D and constraints C. Here X is the set of white cells, D is $\{$bulb, empty$\}$, and C holds three constraints: no two bulbs illuminate each other ($C_1$), every white cell is lit ($C_2$), and every numbered black cell has exactly the given number of bulbs next to it ($C_3$).
 
 Let $\mathit{sight}(w)$ be the white cells sharing a row or column with $w \in X$ and not separated from it by a black cell, let $n_c$ and $N_c$ be a numbered cell's clue and its white neighbours, let $\mathit{Clues}$ be all numbered cells, and let $b_w \in \{0,1\}$ say whether $w$ holds a bulb:
@@ -138,7 +137,7 @@ Let $\mathit{sight}(w)$ be the white cells sharing a row or column with $w \in X
     \tag{$C_3$}
 \end{align}
 
-Solving the problem means assigning a value from D to every variable in X so that all constraints hold. All three are \emph{counting} constraints, because each limits how many bulbs a region may contain. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three solvers were built on this formulation, differing only in how much reasoning they do while branching: a naive baseline, forward checking, and full inference.
+Solving the problem means assigning a value from D to every variable in X so that all constraints hold. All three are \emph{counting} constraints, because each limits how many bulbs a region may contain. The methods applied to them, backtracking search with forward checking and with constraint propagation, follow Russell and Norvig\cite{aima}. Three solvers were built on this formulation, differing in how much reasoning they do while branching: a naive baseline, forward checking, and full inference.
 
 \subsection{Naive Backtracking}
 
@@ -254,7 +253,7 @@ comparison with a stored answer, because a puzzle may have several solutions.
 
 Using the setup of Section~\ref{sec:setup}, Table~\ref{tab:solvesize} shows how many
 puzzles each solver finished inside the budget. Full inference solved every generated
-puzzle, and forward checking failed only on the largest boards. The naive solver started at
+puzzle, and forward checking failed only at the two largest sizes. The naive solver started at
 15 out of 15 on $7\times7$ boards and solved nothing on $25\times25$. Simulated annealing
 matched the naive solver's total, while hill climbing solved about a quarter of the set.
 
@@ -279,8 +278,8 @@ matched the naive solver's total, while hill climbing solved about a quarter of 
 \subsection{The effect of inference}
 
 Measured in search nodes (Figure~\ref{fig:scaling}), the gap between the naive solver and
-the two informed ones grows with board size, from about seven times at $7\times7$ to one
-hundred and sixty times at $14\times14$. Inference does not remove a fixed amount of work,
+full inference grows with board size, from about twelve times at $7\times7$ to fifty times
+at $18\times18$. Inference does not remove a fixed amount of work,
 it changes how fast the cost grows.
 
 The clearest result comes from the published $7\times7$ puzzle of
@@ -306,8 +305,9 @@ checking, but fewer nodes do not always mean less time, because propagation cost
 every node and only pays back when there is something to work out.
 Table~\ref{tab:fcfull} separates the two by clue density: on easy boards full inference is
 faster at every size, and thirty-five times faster at $25\times25$, while on hard boards
-propagation usually finds nothing and forward checking wins. Full inference remains the
-more reliable solver, being the only one that never ran out of time.
+propagation usually finds nothing and forward checking wins, with medium between the two.
+Full inference remains the more reliable solver, being the only one that never ran out of
+time.
 
 \begin{table}[H]
   \centering
@@ -325,7 +325,9 @@ more reliable solver, being the only one that never ran out of time.
   \end{tabular}
   \caption{Median solving time in milliseconds for the two informed
   backtracking solvers, split by difficulty preset. Whether propagation
-  pays for itself depends on clue density rather than on board size.}
+  pays for itself depends on clue density rather than on board size.
+  Forward checking solved only one medium $25\times25$ instance, so that
+  entry is not comparable with the rest.}
   \label{tab:fcfull}
 \end{table}
 
@@ -333,14 +335,15 @@ more reliable solver, being the only one that never ran out of time.
 
 Figure~\ref{fig:paradigms} compares all five solvers on hard boards. Simulated annealing
 was better than hill climbing at every size, solving 19 of the 25 hard puzzles against 11,
-and 45 of all 75 against 21, which repeats the main result of Sun, Browning and
-Perera~\cite{light_up_ai} on different puzzles and with a separate implementation.
+and 45 of all 75 against 21, which repeats the ordering reported by Sun, Browning and
+Perera~\cite{light_up_ai}, though not their 100\% solve rate, on different puzzles and with
+a separate implementation.
 
 How each solver fails is as interesting as the counts. Because the cost function reports
 the violations left, a failed run still shows how close it came: hill climbing ended its
-failed runs with 13 violations on average, simulated annealing with 5.5. In one
-twenty-second run it restarted 12{,}496 times without removing the last violation, because
-every available move made the board worse.
+failed runs with a median of 13 violations left, simulated annealing with 5.5. In a
+separate twenty-second run, hill climbing restarted 12{,}496 times without removing the
+last violation, because every available move made the board worse.
 
 \begin{figure}[H]
     \centering
@@ -396,11 +399,12 @@ More time helps a solver that is only slow, not one that is stuck.
 \subsection{Limitations}
 
 Three points limit these numbers. Only five puzzles were used per combination, so one
-puzzle changes a single cell of Table~\ref{tab:solvesize} by twenty points. All medians use
-solved runs only: the naive solver's median node count drops between $14\times14$ and
-$18\times18$ only because the harder puzzles at the larger size were never solved and so
-never entered the median. Finally, all times come from one machine, so the comparison is
-valid but the milliseconds are not.
+puzzle moves a point of Figure~\ref{fig:paradigms} by twenty percentage points and a cell
+of Table~\ref{tab:solvesize} by about seven. All medians use solved runs only, so a solver
+can look better on larger boards than it is: pooled over the three presets, the naive
+solver's median node count falls from $14\times14$ to $18\times18$, because the harder
+puzzles at the larger size were never solved and so never entered the median. Finally, all
+times come from one machine, so the comparison is valid but the milliseconds are not.
 
 \section{Conclusion}
 
