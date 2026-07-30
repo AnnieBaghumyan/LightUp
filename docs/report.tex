@@ -83,6 +83,7 @@ The report continues as follows. Chapter 2 reviews earlier work, Chapter 3 descr
 
 
 
+\newpage
 \section{Rules}
 
 Light Up is played on a rectangular board of black and white cells; all boards used here are square, of size $N \times N$. The player places light bulbs in white cells. A bulb lights its whole row and column unless a black cell blocks the light, and no two bulbs may shine on each other. Some black cells carry a number from 0 to 4, giving how many bulbs must sit in the cells sharing an edge with it; unnumbered black cells may have any number beside them. The puzzle is solved when every white cell is lit and all rules hold (Figure \ref{fig:example}). 
@@ -209,6 +210,7 @@ Solving the problem means assigning a value from D to every variable in X so tha
   consequences of the starting clues are found before the search begins.
 
 
+\newpage
 \section{Local search}
 
 Local search was used for the second solution approach. Two solvers were implemented: hill climbing and simulated annealing. Both are incomplete algorithms that work on a complete-state formulation, evaluating whole board configurations rather than building a solution cell by cell. Both use a 3-action model, adding, removing or moving a bulb, and both precompute the board geometry so the lit cells are known after each move.
@@ -232,6 +234,7 @@ This implementation uses steepest-ascent logic with greedy neighbour selection. 
 
 Simulated annealing sometimes accepts a move that makes the board worse, which prevents the solver from getting stuck where no single move is an improvement but a solution still exists elsewhere. At each step the agent proposes one random change. If it lowers the cost it is always accepted; if it raises the cost, it is accepted with a probability based on a "temperature" value. The temperature starts high, so the search explores widely, and then drops, so the search becomes stricter and behaves more like hill climbing. If it falls below a minimum without a solution, the solver reheats and a new configuration is generated.
 
+\newpage
 \section{Experimental setup}
 \label{sec:setup}
 
@@ -340,6 +343,7 @@ time.
   \label{tab:fcfull}
 \end{table}
 
+\newpage
 \subsection{Complete search against local search}
 
 Figure~\ref{fig:paradigms} compares all five solvers on hard boards. Simulated annealing
@@ -365,6 +369,7 @@ last violation, because every available move made the board worse.
 Neither local search solver can prove a board has no solution, and within this budget
 complete search with inference beat both at every size.
 
+\newpage
 \subsection{What makes an instance hard}
 
 Denser boards were expected to be easier for every solver, but Figure~\ref{fig:difficulty}
@@ -390,6 +395,7 @@ term, so dense boards have more local optima. Problem size moves the other way: 
 $14\times14$ the hard preset leaves about 172 white cells against 146 for easy. The presets
 predict difficulty for a person, not for a solver.
 
+\newpage
 \subsection{Sensitivity to the time budget}
 
 A five-second budget is a free choice, so the sweep was repeated with ten seconds on the
@@ -415,6 +421,7 @@ solver's median node count falls from $14\times14$ to $18\times18$, because the 
 puzzles at the larger size were never solved and so never entered the median. Finally, all
 times come from one machine, so the comparison is valid but the milliseconds are not.
 
+\newpage
 \section{Conclusion}
 
 Five ways of solving the same problem were compared under the same conditions.
