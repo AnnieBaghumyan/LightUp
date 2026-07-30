@@ -32,9 +32,11 @@ SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
 
 # ----- look & feel -----------------------------------------------------------
 
-CELL = 52      # preferred pixel size of one board cell (small boards)
-MIN_CELL = 20  # floor when shrinking big boards to fit the screen
-PAD = 18       # margin around the board inside the canvas
+MAX_CELL = 110  # largest pixel size of one board cell (used by small boards)
+MIN_CELL = 20   # floor when shrinking big boards
+PAD = 18        # minimum margin around the board inside the canvas
+MAX_VIEW = 780  # the board canvas is this many pixels square for EVERY
+                # puzzle, so the window never changes size
 
 COLORS = {
     "app_bg":     "#23232b",  # window background
@@ -72,37 +74,44 @@ class BoardView:
     def __init__(self, parent, puzzle):
         self.canvas = tk.Canvas(parent, bg=COLORS["board_bg"],
                                 highlightthickness=0)
+        # The canvas is sized ONCE, here, and never again.  Sizing it per
+        # puzzle would resize the whole window every time a board of a
+        # different shape is loaded, which makes the window useless as a
+        # screen-recording source.  The margins leave room for the two
+        # toolbars, the status bar and the OS taskbar.
+        self.view_w = min(MAX_VIEW, self.canvas.winfo_screenwidth() - 120)
+        self.view_h = min(MAX_VIEW, self.canvas.winfo_screenheight() - 280)
+        self.canvas.config(width=self.view_w, height=self.view_h)
         self.set_puzzle(puzzle)
 
     def set_puzzle(self, puzzle):
-        """Attach a (new) puzzle and resize the canvas to fit it.
+        """Attach a (new) puzzle and lay it out inside the fixed canvas.
 
-        The cell size adapts to the screen: big boards (up to 25x25) shrink
-        until they fit, small boards use the comfortable default.  The
-        margins subtracted below leave room for the toolbars, the status
-        bar and the OS taskbar.
+        The board keeps its aspect ratio and is centred: cells grow until
+        they hit MAX_CELL or run out of canvas, so a 7x7 fills the frame
+        with large cells and a 25x25 fills it with small ones.
         """
         self.puzzle = puzzle
-        avail_w = self.canvas.winfo_screenwidth() - 120 - 2 * PAD
-        avail_h = self.canvas.winfo_screenheight() - 280 - 2 * PAD
+        avail_w = self.view_w - 2 * PAD
+        avail_h = self.view_h - 2 * PAD
         self.cell = max(MIN_CELL,
-                        min(CELL, avail_w // puzzle.width,
+                        min(MAX_CELL, avail_w // puzzle.width,
                             avail_h // puzzle.height))
-        self.canvas.config(width=puzzle.width * self.cell + 2 * PAD,
-                           height=puzzle.height * self.cell + 2 * PAD)
+        self.off_x = (self.view_w - puzzle.width * self.cell) // 2
+        self.off_y = (self.view_h - puzzle.height * self.cell) // 2
 
     def cell_at(self, x, y):
         """The (row, col) under a pixel position, or None outside the board."""
-        c = (x - PAD) // self.cell
-        r = (y - PAD) // self.cell
+        c = (x - self.off_x) // self.cell
+        r = (y - self.off_y) // self.cell
         return (r, c) if self.puzzle.in_bounds(r, c) else None
 
     # ----- drawing -----------------------------------------------------------
 
     def _cell_box(self, r, c):
         """Pixel rectangle (x0, y0, x1, y1) of a cell."""
-        x0 = PAD + c * self.cell
-        y0 = PAD + r * self.cell
+        x0 = self.off_x + c * self.cell
+        y0 = self.off_y + r * self.cell
         return x0, y0, x0 + self.cell, y0 + self.cell
 
     def _draw_bulb(self, r, c, in_conflict):
