@@ -32,11 +32,14 @@ SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
 
 # ----- look & feel -----------------------------------------------------------
 
-MAX_CELL = 110  # largest pixel size of one board cell (used by small boards)
+MAX_CELL = 52   # largest pixel size of one board cell; small boards stop
+                # growing here and are centred instead of filling the frame
 MIN_CELL = 20   # floor when shrinking big boards
 PAD = 18        # minimum margin around the board inside the canvas
-MAX_VIEW = 780  # the board canvas is this many pixels square for EVERY
-                # puzzle, so the window never changes size
+MAX_VIEW = 660  # the board canvas is this many pixels square for EVERY
+                # puzzle, so the window never changes size. Raise it to
+                # give 25x25 bigger cells, lower it to trim the margin
+                # around small boards.
 
 COLORS = {
     "app_bg":     "#23232b",  # window background
