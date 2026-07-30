@@ -25,7 +25,7 @@ from pathlib import Path
 from . import parser as puzzle_parser
 from .board import lit_cells
 from .generator import DIFFICULTY, MAX_SIZE, MIN_SIZE, generate
-from .solvers import SOLVERS
+from .solvers import LOCAL_SEARCH, SOLVERS
 from .validator import check_solution, involved_cells
 
 SOLVE_TIMEOUT_S = 15  # keep the recording bounded on hard boards
@@ -424,6 +424,8 @@ class PlayApp:
                 del events[i + 1:]
                 break
         self.replay = {"events": events, "pos": 0, "bulbs": set(),
+                       "seen_conflicts": 0, "restarts": 0,
+                       "local": self.solver_var.get() in LOCAL_SEARCH,
                        "result": holder["result"]}
         self.playing = False
         if self._on_ready is not None:
@@ -448,16 +450,36 @@ class PlayApp:
                 rp["bulbs"].add(cell)
             elif ev == "remove":
                 rp["bulbs"].discard(cell)
+            elif ev == "restart":
+                rp["restarts"] += 1
             elif ev == "conflict":
                 conflicts.add(cell)   # flashes red for this frame
+                rp["seen_conflicts"] += 1
             elif ev == "solution":
                 solved_now = True
             last = ev if cell is None else f"{ev} {cell}"
 
+        # A frame replays a BATCH of events, so the batch that carries the
+        # solution usually also carries the last conflicts of the search.
+        # Those cells are no longer in conflict on the solved board — drawing
+        # them red would contradict the verdict.
+        if solved_now:
+            conflicts.clear()
+
         self.view.show_state(rp["bulbs"], conflicts, solved_now)
 
         result, stats = rp["result"], rp["result"].stats
+        # Mid-replay we may only report what has actually been replayed.
+        # rp["result"].stats holds the FINISHED solve's totals — the solver
+        # ran to completion in the background before the animation started —
+        # so showing them here would give the answer away on frame one.
+        # Each family gets the counter that means something for it: a bulb
+        # count of events would just restate pos/len.  Backtracking hits
+        # conflicts; local search restarts out of local optima.
+        counter = (f"restarts={rp['restarts']}" if rp["local"]
+                   else f"conflicts so far={rp['seen_conflicts']}")
         progress = (f"solver: event {rp['pos']}/{len(rp['events'])}"
+                    f"   bulbs={len(rp['bulbs'])}   {counter}"
                     f"   [{last}]")
         totals = (f"nodes={stats.nodes}  conflicts={stats.conflicts}  "
                   f"backtracks={stats.backtracks}  "
@@ -475,8 +497,7 @@ class PlayApp:
                 fg=COLORS["status_ok"] if result.solved
                 else COLORS["status_txt"])
         else:
-            self.status.config(text=f"{progress}\n{totals}",
-                               fg=COLORS["status_txt"])
+            self.status.config(text=progress, fg=COLORS["status_txt"])
         if solved_now:
             self.playing = False               # pause on the solution frame
 
@@ -484,6 +505,8 @@ class PlayApp:
         """Reset the recording to the start so it can be watched again."""
         self.replay["pos"] = 0
         self.replay["bulbs"] = set()
+        self.replay["seen_conflicts"] = 0
+        self.replay["restarts"] = 0
 
     def toggle_play(self):
         if self.solving:

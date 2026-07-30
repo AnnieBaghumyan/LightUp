@@ -21,3 +21,9 @@ SOLVERS = {
     "hill climbing": solve_hillclimb,
     "simulated annealing": solve_annealing,
 }
+
+# The two families report different things.  Backtracking hits conflicts and
+# backtracks; local search accepts moves and measures a cost, and never emits
+# a "conflict" event at all.  Front-ends use this to label progress honestly
+# instead of showing a conflict counter that can only ever read zero.
+LOCAL_SEARCH = frozenset({"hill climbing", "simulated annealing"})

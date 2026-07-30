@@ -144,6 +144,7 @@ def solve_hillclimb(puzzle, observer=None, timeout_s=10, seed=None,
             stats.conflicts += 1
             stats.backtracks += 1
             fresh = _random_full_lighting(whites, sight, rng)
+            notify("restart", None, current)
             _emit_diff(notify, current, fresh)
             current, current_cost = fresh, cost(fresh)
             best_cost = min(best_cost, current_cost)
@@ -191,6 +192,7 @@ def solve_annealing(puzzle, observer=None, timeout_s=10, seed=None,
         if temperature < t_min:                    # cooled out: reheat
             stats.backtracks += 1
             fresh = _random_full_lighting(whites, sight, rng)
+            notify("restart", None, current)
             _emit_diff(notify, current, fresh)
             current, current_cost = fresh, cost(fresh)
             best_cost = min(best_cost, current_cost)
