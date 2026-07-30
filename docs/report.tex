@@ -87,13 +87,12 @@ The report continues as follows. Chapter 2 reviews earlier work, Chapter 3 descr
 
 Light Up is played on a rectangular board of black and white cells; all boards used here are square, of size $N \times N$. The player places light bulbs in white cells. A bulb lights its whole row and column unless a black cell blocks the light, and no two bulbs may shine on each other. Some black cells carry a number from 0 to 4, giving how many bulbs must sit in the cells sharing an edge with it; unnumbered black cells may have any number beside them. The puzzle is solved when every white cell is lit and all rules hold (Figure \ref{fig:example}). 
 
-% [H] keeps the example beside the rules that describe it. The height cap
-% is what makes that possible: without it the image is too tall for the
-% space left on the page, so it was pushed off and left a gap behind.
+% 4090x2148, so 1.90 wide to high: at 0.55\linewidth the image is about
+% 1.8in tall, which leaves the caption room to sit under the rules text
+% instead of being pushed onto a page of its own.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\linewidth,height=0.25\textheight,%
-                     keepaspectratio]{59ED429E-C5DC-474F-BA71-9CEB906A913D.jpg}
+    \includegraphics[width=0.55\linewidth]{example_7x7.jpg}
     \caption{$7\times7$ Light Up puzzle instance before and after solving}
     \label{fig:example}
 \end{figure}
@@ -114,10 +113,10 @@ Plain hill climbing moves to the best neighbouring state at each step and stops 
 
 In his "Analysis of Akari" paper\cite{analysis_akari} Bram Pulles built a SAT solver and a backtracking solver. He first runs a trivial solver as preprocessing, which finds cells where the free spaces around a black cell exactly match its clue, so the bulbs are forced, and marks cells where no bulb can be placed (Figure \ref{fig:trivial}).
 
+% 1486x353, a wide strip: full width makes it only about 1.5in tall.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth,height=0.30\textheight,%
-                     keepaspectratio]{Screenshot 2026-07-28 at 16.48.10.png}
+    \includegraphics[width=\linewidth]{trivial_rules.png}
     \caption{Examples of trivial solutions\cite{analysis_akari}}
     \label{fig:trivial}
 \end{figure}
